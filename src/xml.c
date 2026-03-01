@@ -985,6 +985,18 @@ struct xml_node* xml_document_root(struct xml_document* document) {
 /**
  * [PUBLIC API]
  */
+size_t xml_document_buffer_length(struct xml_document* document) {
+	if (!document) {
+		return 0;
+	}
+	return document->buffer.length;
+}
+
+
+
+/**
+ * [PUBLIC API]
+ */
 struct xml_string* xml_node_name(struct xml_node* node) {
 	if (!node) {
 		return 0;

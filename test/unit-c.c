@@ -232,6 +232,36 @@ static void test_xml_parse_document_3(void **state) {
 
 
 /**
+ * xml_open_document with a minimal known-size file (exact buffer).
+ * Parses input/minimal.xml (content "<a></a>") and asserts root name is "a",
+ * no extra content (empty element, no children), and document buffer length
+ * equals file size. Exercises the feof/read path; a classic feof() off-by-one
+ * could yield wrong length or extra bytes.
+ */
+static void test_open_document_exact_buffer(void **state) {
+	(void)state;
+	FILE* f = fopen("input/minimal.xml", "rb");
+	assert_non_null(f);
+	int seek_ok = fseek(f, 0, SEEK_END);
+	assert_int_equal(seek_ok, 0);
+	long file_size = ftell(f);
+	assert_true(file_size >= 0);
+	rewind(f);
+
+	struct xml_document* document = xml_open_document(f);
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "a"));
+	assert_int_equal(xml_node_children(root), 0);
+	assert_true(xml_document_buffer_length(document) == (size_t)file_size);
+
+	xml_document_free(document, true);
+}
+
+
+/**
  * Attributes from in-memory buffer: node with 0 attributes.
  * xml_parse_document(source, len); no attributes on first child.
  */
@@ -440,6 +470,7 @@ static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_1),
 	cmocka_unit_test(test_xml_parse_document_2),
 	cmocka_unit_test(test_xml_parse_document_3),
+	cmocka_unit_test(test_open_document_exact_buffer),
 	cmocka_unit_test(test_attributes_in_memory_0),
 	cmocka_unit_test(test_attributes_in_memory_1),
 	cmocka_unit_test(test_attributes_in_memory_2),

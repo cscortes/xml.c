@@ -54,11 +54,12 @@ This document defines the test categories for the xml.c library, inventories the
 |------|------|-------------|---------|
 | `test_xml_parse_document_3` | unit-c.c | Opens file; root, Element, With, Child path. | input/test.xml |
 | `test_attributes_from_file_0/1/2` | unit-c.c | Opens file; first child has 0, 1, or 2 attributes. | input/test-attributes-0.xml, -1.xml, -2.xml |
+| `test_open_document_exact_buffer` | unit-c.c | Minimal file `<a></a>`; root "a", 0 children, buffer length equals file size. | input/minimal.xml |
 
 **Suggested tests**
 
 - Keep `test_xml_parse_document_3`.
-- Optional: `test_open_document_buffer_length` — small known file or fmemopen; parse with `xml_open_document`, assert root and optionally `document->buffer.length` equals expected (to lock feof/read behavior).
+- ~~Optional: `test_open_document_buffer_length`~~ — **implemented**: `test_open_document_exact_buffer` uses `xml_document_buffer_length()` to assert buffer length equals file size (locks feof/read behavior).
 
 ---
 

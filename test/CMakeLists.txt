@@ -14,6 +14,8 @@ file(COPY "${CMAKE_CURRENT_LIST_DIR}/input/test-attributes-1.xml"
 	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/input/test-attributes-2.xml"
 	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/input/minimal.xml"
+	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input")
 
 
 

@@ -100,6 +100,15 @@ struct xml_node* xml_document_root(struct xml_document* document);
 
 
 /**
+ * @return Length in bytes of the buffer that was parsed to create the document,
+ *     or 0 if document is NULL. Useful for validation (e.g. comparing to file
+ *     size when the document was opened with xml_open_document).
+ */
+size_t xml_document_buffer_length(struct xml_document* document);
+
+
+
+/**
  * @return The xml_node's tag name
  */
 struct xml_string* xml_node_name(struct xml_node* node);

@@ -47,7 +47,7 @@ Test project /path/to/xml.c/build
 | **xml-test-c** | Single C executable that runs all cmocka unit tests in one go (parsing, file-based, attributes, NULL/lifecycle). It is built from a runner (`test/test_main.c`) plus test modules (`test/unit-c.c`, `test/unit-c-null.c`) and produces **one comprehensive report** for the whole suite. |
 | **xml-test-c-valgrind** | Same C tests run under [Valgrind](https://valgrind.org/) (memcheck, full leak check). Added only if Valgrind is installed; fails if Valgrind reports memory errors or leaks. |
 
-The C test executable uses test input files from `test/input/` (copied into the build tree). Tests run with their working directory set to the build directory so they can find `input/test.xml` and `input/test-attributes.xml`.
+The C test executable uses test input files from `test/input/` (copied into the build tree). Tests run with their working directory set to the build directory so they can find `input/test.xml`, `input/test-attributes-*.xml`, and `input/minimal.xml`.
 
 ---
 

@@ -4,6 +4,15 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.4.0] — 2025-02-28
+
+### Added
+
+- **xml_document_buffer_length** — New public API: `size_t xml_document_buffer_length(struct xml_document* document)` returns the length in bytes of the buffer that was parsed (or 0 if document is NULL). Keeps `struct xml_document` opaque; useful for validation (e.g. comparing to file size when opened with `xml_open_document`). Declared in [src/xml.h](src/xml.h).
+- **test_open_document_exact_buffer** — Parses `input/minimal.xml` (`<a></a>`) via `xml_open_document`; asserts root name `"a"`, no children, and `xml_document_buffer_length(document)` equals file size. Exercises the feof/read path (see docs/testable_issues_priority.md §6). Fixture [test/input/minimal.xml](test/input/minimal.xml); CMake copies it into the test build tree.
+
+---
+
 ## [0.3.3] — 2025-02-28
 
 ### Fixed

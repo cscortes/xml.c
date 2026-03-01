@@ -1,6 +1,6 @@
 # Project setup
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-project(xml LANGUAGES C VERSION 0.3.3)
+project(xml LANGUAGES C VERSION 0.4.0)
 
 
 # Fetch cmocka (C unit test framework) at a fixed version
