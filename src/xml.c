@@ -529,11 +529,11 @@ cleanup:
 /**
  * [PRIVATE]
  *
- * Parses the name out of the an XML tag's ending
+ * Parses the name out of an XML tag's ending
  *
- * ---( Example )---
+ * \code
  * tag_name>
- * ---
+ * \endcode
  */
 static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_end");
@@ -580,9 +580,9 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
  * and including the closing `>'. Used so that xml_find_attributes can parse
  * attributes from the same buffer.
  *
- * ---( Example )---
+ * \code
  * tag_name attr="value">
- * ---
+ * \endcode
  */
 static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) {
 	xml_parser_info(parser, "open_tag_content");
@@ -610,10 +610,10 @@ static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) 
  *
  * Parses an opening XML tag (name and optional attributes).
  *
- * ---( Example )---
+ * \code
  * <tag_name>
  * <tag_name attr="value">
- * ---
+ * \endcode
  */
 static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_open");
@@ -637,11 +637,11 @@ static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 /**
  * [PRIVATE]
  *
- * Parses an closing XML tag without attributes
+ * Parses a closing XML tag without attributes
  *
- * ---( Example )---
+ * \code
  * </tag_name>
- * ---
+ * \endcode
  */
 static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_close");
@@ -675,11 +675,11 @@ static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
  *
  * Parses a tag's content
  *
- * ---( Example )---
+ * \code
  *     this is
  *   a
  *       tag {} content
- * ---
+ * \endcode
  *
  * @warning CDATA etc. is _not_ and will never be supported
  */
@@ -734,17 +734,19 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
  * 
  * Parses an XML fragment node
  *
- * ---( Example without children )---
+ * Without children:
+ * \code
  * <Node>Text</Node>
- * ---
+ * \endcode
  *
- * ---( Example with children )---
+ * With children:
+ * \code
  * <Parent>
  *     <Child>Text</Child>
  *     <Child>Text</Child>
  *     <Test>Content</Test>
  * </Parent>
- * ---
+ * \endcode
  */
 static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	xml_parser_info(parser, "node");
@@ -840,7 +842,7 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	/* Close tag has to match open tag
 	 */
 	if (!xml_string_equals(tag_open, tag_close)) {
-		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::tag missmatch");
+		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::tag mismatch");
 		goto exit_failure;
 	}
 
@@ -858,7 +860,7 @@ node_creation:;
 	return node;
 
 
-	/* A failure occured, so free all allocalted resources
+	/* A failure occurred, so free all allocated resources
 	 */
 exit_failure:
 	if (tag_open) {

@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.5.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.6.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -75,7 +75,7 @@ This repo is developed against the fork at [cscortes/xml.c](https://github.com/c
 
 To sync from the original: `git fetch upstream && git merge upstream/master`.
 
-See [docs/programming_style.md](docs/programming_style.md) for style guidelines (including grammar for user-facing messages).
+See [docs/programming_style.md](docs/programming_style.md) for style guidelines (including grammar for user-facing messages). The API reference is in [docs/xml_api.md](docs/xml_api.md); regenerate it with `cmake --build build --target api_docs` (requires Doxygen and Python 3).
 
 
 ## Current xml.c XML compliance

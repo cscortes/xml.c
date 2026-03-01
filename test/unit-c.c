@@ -159,7 +159,7 @@ static void test_xml_parse_document_1(void **state) {
 
 
 /**
- * Tests the eas functionality
+ * Tests the easy functionality (xml_easy_child, xml_easy_name, xml_easy_content)
  */
 static void test_xml_parse_document_2(void **state) {
 	(void)state;

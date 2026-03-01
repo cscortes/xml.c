@@ -4,6 +4,18 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.6.0] — 2025-03-01
+
+### Added
+
+- **API documentation (Doxygen + Markdown)** — Build target `api_docs` generates HTML under `build/api_docs/html/` and writes [docs/xml_api.md](docs/xml_api.md) from Doxygen comments in `src/xml.h`. Requires Doxygen and Python 3; script [scripts/doxygen_xml_to_md.py](scripts/doxygen_xml_to_md.py) converts Doxygen XML to a single Markdown file. Commit workflow rule updated to list `docs/xml_api.md` as generated docs.
+
+### Changed
+
+- **Doxygen comments** — Header and source: corrected `xml_parse_buffer` → `xml_parse_document` in `xml_document_free` description; added `@param` for all public API in [src/xml.h](src/xml.h); fixed example blocks in [src/xml.c](src/xml.c) to use `\code`/`\endcode` so XML tags are not interpreted as HTML; fixed typos (e.g. "tag mismatch", "occurred", "allocated"). Test comments: [test/unit-c.c](test/unit-c.c) "eas" → "easy", [test/test_runner.h](test/test_runner.h) added `@param` for getter functions.
+
+---
+
 ## [0.5.0] — 2025-03-01
 
 ### Added

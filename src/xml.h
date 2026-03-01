@@ -86,13 +86,14 @@ struct xml_document* xml_open_document(FILE* source);
  * references obtained through the document will be invalidated
  *
  * @param document xml_document to free
- * @param free_buffer iff true the internal buffer supplied via xml_parse_buffer
+ * @param free_buffer iff true the internal buffer supplied via xml_parse_document
  *     will be freed with the `free` system call
  */
 void xml_document_free(struct xml_document* document, bool free_buffer);
 
 
 /**
+ * @param document The document
  * @return xml_node representing the document root
  */
 struct xml_node* xml_document_root(struct xml_document* document);
@@ -100,6 +101,7 @@ struct xml_node* xml_document_root(struct xml_document* document);
 
 
 /**
+ * @param document The document
  * @return Length in bytes of the buffer that was parsed to create the document,
  *     or 0 if document is NULL. Useful for validation (e.g. comparing to file
  *     size when the document was opened with xml_open_document).
@@ -109,6 +111,7 @@ size_t xml_document_buffer_length(struct xml_document* document);
 
 
 /**
+ * @param node The node
  * @return The xml_node's tag name
  */
 struct xml_string* xml_node_name(struct xml_node* node);
@@ -116,6 +119,7 @@ struct xml_string* xml_node_name(struct xml_node* node);
 
 
 /**
+ * @param node The node
  * @return The xml_node's string content (if available, otherwise NULL)
  */
 struct xml_string* xml_node_content(struct xml_node* node);
@@ -123,6 +127,7 @@ struct xml_string* xml_node_content(struct xml_node* node);
 
 
 /**
+ * @param node The node
  * @return Number of child nodes
  */
 size_t xml_node_children(struct xml_node* node);
@@ -130,6 +135,8 @@ size_t xml_node_children(struct xml_node* node);
 
 
 /**
+ * @param node The node
+ * @param child Zero-based index of the child
  * @return The n-th child or 0 if out of range
  */
 struct xml_node* xml_node_child(struct xml_node* node, size_t child);
@@ -137,6 +144,7 @@ struct xml_node* xml_node_child(struct xml_node* node, size_t child);
 
 
 /**
+ * @param node The node
  * @return Number of attribute nodes
  */
 size_t xml_node_attributes(struct xml_node* node);
@@ -144,6 +152,8 @@ size_t xml_node_attributes(struct xml_node* node);
 
 
 /**
+ * @param node The node
+ * @param attribute Zero-based index of the attribute
  * @return the n-th attribute name or 0 if out of range
  */
 struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribute);
@@ -151,6 +161,8 @@ struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribu
 
 
 /**
+ * @param node The node
+ * @param attribute Zero-based index of the attribute
  * @return the n-th attribute content or 0 if out of range
  */
 struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attribute);
@@ -158,15 +170,18 @@ struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attr
 
 
 /**
+ * @param node The node from which to start
+ * @param child_name First path segment (tag name); further segments follow as variadic
+ *     arguments; list must end with NULL (or 0)
  * @return The node described by the path or 0 if child cannot be found
  * @warning Each element on the way must be unique
- * @warning Last argument must be 0
  */
-struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child, ...);
+struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name, ...);
 
 
 
 /**
+ * @param node The node
  * @return 0-terminated copy of node name
  * @warning User must free the result
  */
@@ -175,6 +190,7 @@ uint8_t* xml_easy_name(struct xml_node* node);
 
 
 /**
+ * @param node The node
  * @return 0-terminated copy of node content
  * @warning User must free the result
  */
@@ -183,6 +199,7 @@ uint8_t* xml_easy_content(struct xml_node* node);
 
 
 /**
+ * @param string The string
  * @return Length of the string
  */
 size_t xml_string_length(struct xml_string* string);
@@ -192,6 +209,9 @@ size_t xml_string_length(struct xml_string* string);
 /**
  * Copies the string into the supplied buffer
  *
+ * @param string The string to copy
+ * @param buffer Destination buffer
+ * @param length Size of the buffer (at most this many bytes are written)
  * @warning String will not be 0-terminated
  * @warning Will write at most length bytes, even if the string is longer
  */
