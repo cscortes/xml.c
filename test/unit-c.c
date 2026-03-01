@@ -77,7 +77,7 @@ static bool string_equals(struct xml_string* a, char const* b) {
 static struct xml_node* get_node_by_name(struct xml_node* base, char const* name) {
 	size_t const name_length = strlen(name);
 
-	uint8_t* base_name = xml_easy_name(base);
+	uint8_t* base_name = xml_node_name_c_string(base);
 	size_t const base_name_length = strlen((char const*)base_name);
 
 	if (name_length == base_name_length) {
@@ -160,7 +160,7 @@ static void test_xml_parse_document_1(void **state) {
 
 
 /**
- * Tests the easy functionality (xml_easy_child, xml_easy_name, xml_easy_content)
+ * Tests path child (xml_easy_child) and C-string helpers (xml_node_name_c_string, xml_node_content_c_string)
  */
 static void test_xml_parse_document_2(void **state) {
 	(void)state;
@@ -199,11 +199,11 @@ static void test_xml_parse_document_2(void **state) {
 	struct xml_node* must_be_null = xml_easy_child(root, (uint8_t const*)"Child");
 	assert_null(must_be_null);
 
-	uint8_t* name_is = xml_easy_name(xml_easy_child(root, (uint8_t const*)"This", (uint8_t const*)"Is", 0));
+	uint8_t* name_is = xml_node_name_c_string(xml_easy_child(root, (uint8_t const*)"This", (uint8_t const*)"Is", 0));
 	assert_string_equal((char const*)name_is, "Is");
 	free(name_is);
 
-	uint8_t* content_a = xml_easy_content(test_a);
+	uint8_t* content_a = xml_node_content_c_string(test_a);
 	assert_string_equal((char const*)content_a, "Content A");
 	free(content_a);
 
@@ -625,14 +625,14 @@ static void test_find_node_by_tag_name(void **state) {
 
 	struct xml_node* us = get_node_by_name(root, "us");
 	assert_non_null(us);
-	uint8_t* us_content = xml_easy_content(us);
+	uint8_t* us_content = xml_node_content_c_string(us);
 	assert_non_null(us_content);
 	assert_string_equal((char const*)us_content, "testus");
 	free(us_content);
 
 	struct xml_node* as = get_node_by_name(root, "as");
 	assert_non_null(as);
-	uint8_t* as_content = xml_easy_content(as);
+	uint8_t* as_content = xml_node_content_c_string(as);
 	assert_non_null(as_content);
 	assert_string_equal((char const*)as_content, "testas one");
 	free(as_content);

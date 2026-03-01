@@ -20,7 +20,7 @@ This document defines the test categories for the xml.c library, inventories the
 | 2 | Parsing — valid (from file) | `xml_open_document(FILE*)` with fixture files; correct root and structure. |
 | 3 | Parsing — invalid / error | Empty buffer, malformed or truncated XML; expect NULL document; optional ASan for error-at-end-of-buffer. |
 | 4 | Attributes | Nodes with attributes; count, name, content; in-memory and/or from file. |
-| 5 | API — success | Each public function with valid inputs: document_root, node name/content, children/child, attributes, easy_child / easy_name / easy_content, string_length / string_copy. |
+| 5 | API — success | Each public function with valid inputs: document_root, node name/content, children/child, attributes, easy_child / node_name_c_string / node_content_c_string, string_length / string_copy. |
 | 6 | API — NULL and lifecycle | NULL document/node/string; `xml_document_free(NULL, ...)`; no crash and (once defined) documented return values. |
 
 ---
@@ -35,7 +35,7 @@ This document defines the test categories for the xml.c library, inventories the
 |------|------|-------------|---------|
 | `test_xml_parse_document_0` | unit-c.c | Single tag; assert root name and content. | SOURCE (in-memory) |
 | `test_xml_parse_document_1` | unit-c.c | Nested Parent/Child; children by index; content. | SOURCE (in-memory) |
-| `test_xml_parse_document_2` | unit-c.c | Deep path; multiple children; easy_child, easy_name, easy_content. | SOURCE (in-memory) |
+| `test_xml_parse_document_2` | unit-c.c | Deep path; multiple children; easy_child, node_name_c_string, node_content_c_string. | SOURCE (in-memory) |
 | `test_parse_attributes_in_memory` | unit-c.c | In-memory SOURCE; first child has 1 attribute "attr"/"value". | SOURCE (in-memory) |
 | `test_find_node_by_tag_name` | unit-c.c | Depth-first search by tag name; multiple matches. | SOURCE (in-memory) |
 
@@ -107,7 +107,7 @@ This document defines the test categories for the xml.c library, inventories the
 
 | Test | File | Description | Fixture |
 |------|------|-------------|---------|
-| Spread across 0, 1, 2, 3, attributes, find_node | unit-c.c | Covered: document_root, node_name, node_content, node_children, node_child, node_attributes, attribute_name/content, easy_child, easy_name, easy_content. Not explicitly tested in isolation: `xml_string_length`, `xml_string_copy` (used only inside `string_equals`). | Various |
+| Spread across 0, 1, 2, 3, attributes, find_node | unit-c.c | Covered: document_root, node_name, node_content, node_children, node_child, node_attributes, attribute_name/content, easy_child, node_name_c_string, node_content_c_string. Not explicitly tested in isolation: `xml_string_length`, `xml_string_copy` (used only inside `string_equals`). | Various |
 
 **Suggested tests**
 
@@ -134,7 +134,7 @@ All of the following are implemented in [test/unit-c-null.c](../test/unit-c-null
 | `test_document_free_null` | `xml_document_free(NULL, false)` and `xml_document_free(NULL, true)`; no crash. |
 | `test_api_null_document` | `xml_document_root(NULL)`; no crash; assert returns NULL once library is fixed. |
 | `test_api_null_node` | For NULL node: `xml_node_name`, `xml_node_content`, `xml_node_children`, `xml_node_child(NULL, 0)`, `xml_node_attributes`, `xml_node_attribute_name(NULL, 0)`, `xml_node_attribute_content(NULL, 0)`; no crash; assert return 0/NULL. |
-| `test_api_null_node_easy` | `xml_easy_child(NULL, "Tag", 0)`, `xml_easy_name(NULL)`, `xml_easy_content(NULL)`; no crash; assert return NULL. |
+| `test_api_null_node_easy` | `xml_easy_child(NULL, "Tag", 0)`, `xml_node_name_c_string(NULL)`, `xml_node_content_c_string(NULL)`; no crash; assert return NULL. |
 | `test_api_null_string` | `xml_string_length(NULL)`; no crash; assert 0. `xml_string_copy(NULL, buf, n)` with valid buffer; no crash; no-op. |
 
 **API checklist (expected behavior when NULL is passed)**
@@ -151,8 +151,8 @@ All of the following are implemented in [test/unit-c-null.c](../test/unit-c-null
 | `xml_node_attribute_name(node, index)` | node NULL | No crash; return NULL. |
 | `xml_node_attribute_content(node, index)` | node NULL | No crash; return NULL. |
 | `xml_easy_child(node, ...)` | node NULL | No crash; return NULL. |
-| `xml_easy_name(node)` | node NULL | No crash; return NULL. |
-| `xml_easy_content(node)` | node NULL | No crash; return NULL. |
+| `xml_node_name_c_string(node)` | node NULL | No crash; return NULL. |
+| `xml_node_content_c_string(node)` | node NULL | No crash; return NULL. |
 | `xml_string_length(string)` | string NULL | No crash; return 0. |
 | `xml_string_copy(string, buffer, length)` | string NULL | No crash; no-op. |
 

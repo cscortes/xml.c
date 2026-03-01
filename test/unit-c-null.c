@@ -67,13 +67,13 @@ static void test_api_null_node(void **state) {
 
 
 /**
- * xml_easy_child(NULL, ...), xml_easy_name(NULL), xml_easy_content(NULL) must not crash and return NULL.
+ * xml_easy_child(NULL, ...), xml_node_name_c_string(NULL), xml_node_content_c_string(NULL) must not crash and return NULL.
  */
 static void test_api_null_node_easy(void **state) {
 	(void)state;
 	assert_null(xml_easy_child(NULL, (uint8_t const*)"Tag", (uint8_t const*)0));
-	assert_null(xml_easy_name(NULL));
-	assert_null(xml_easy_content(NULL));
+	assert_null(xml_node_name_c_string(NULL));
+	assert_null(xml_node_content_c_string(NULL));
 }
 
 

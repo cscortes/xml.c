@@ -45,11 +45,11 @@ Priority is by **severity (desc), then likelihood (desc)**. Suggested tests are 
 
 | Item | Likelihood | Severity | Reproducible? |
 |------|------------|----------|----------------|
-| `xml_easy_child(NULL, "x", 0)`, `xml_easy_name(NULL)`, `xml_easy_content(NULL)` (these already return 0 for NULL node in code, so may be safe) | **2** | **5** if wrong | **Yes** |
+| `xml_easy_child(NULL, "x", 0)`, `xml_node_name_c_string(NULL)`, `xml_node_content_c_string(NULL)` (these already return 0 for NULL node in code, so may be safe) | **2** | **5** if wrong | **Yes** |
 
 **Why testable:** Call with NULL node; assert no crash and (if you document it) return value 0/NULL.
 
-**Suggested test:** Same as (1); include `xml_easy_child(NULL, "Tag", 0)`, `xml_easy_name(NULL)`, `xml_easy_content(NULL)` and assert they return NULL/0 and don’t crash.
+**Suggested test:** Same as (1); include `xml_easy_child(NULL, "Tag", 0)`, `xml_node_name_c_string(NULL)`, `xml_node_content_c_string(NULL)` and assert they return NULL/0 and don’t crash.
 
 ---
 

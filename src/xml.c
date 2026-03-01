@@ -1407,7 +1407,7 @@ struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name
 /**
  * [PUBLIC API]
  */
-uint8_t* xml_easy_name(struct xml_node* node) {
+uint8_t* xml_node_name_c_string(struct xml_node* node) {
 	if (!node) {
 		return 0;
 	}
@@ -1419,7 +1419,7 @@ uint8_t* xml_easy_name(struct xml_node* node) {
 /**
  * [PUBLIC API]
  */
-uint8_t* xml_easy_content(struct xml_node* node) {
+uint8_t* xml_node_content_c_string(struct xml_node* node) {
 	if (!node) {
 		return 0;
 	}

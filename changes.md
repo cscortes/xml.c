@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.10.0] — 2026-03-01
+
+### Changed
+
+- **API clarification / improvement** — Renamed the node text helpers from "easy" to "c_string" so the API clearly indicates they return 0-terminated C strings (caller must free): `xml_easy_name` → `xml_node_name_c_string`, `xml_easy_content` → `xml_node_content_c_string`. [src/xml.h](src/xml.h), [src/xml.c](src/xml.c), tests, and [docs/xml_api.md](docs/xml_api.md) updated. `xml_easy_child` is unchanged (it returns a node, not a string).
+
+---
+
 ## [0.9.0] — 2026-03-01
 
 ### Added

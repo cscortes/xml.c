@@ -186,19 +186,17 @@ struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name
 
 /**
  * @param node The node
- * @return 0-terminated copy of node name
- * @warning User must free the result
+ * @return 0-terminated C string copy of node name (caller must free)
  */
-uint8_t* xml_easy_name(struct xml_node* node);
+uint8_t* xml_node_name_c_string(struct xml_node* node);
 
 
 
 /**
  * @param node The node
- * @return 0-terminated copy of node content
- * @warning User must free the result
+ * @return 0-terminated C string copy of node content (caller must free)
  */
-uint8_t* xml_easy_content(struct xml_node* node);
+uint8_t* xml_node_content_c_string(struct xml_node* node);
 
 
 

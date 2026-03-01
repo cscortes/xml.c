@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.7.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.10.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -39,7 +39,7 @@ For the full list of fixes and remaining candidates, see [docs/issues.md](docs/i
 - **Stricter file and parser logic** — `xml_open_document` uses a correct read loop (no feof off-by-one), checks `ferror`/`fclose`, and the parser clamps past-end position consistently with documented behavior.
 - **Elements with attributes** — Elements like `<Node attr="value">` parse correctly; the parser reads the full opening tag (including attributes) before expecting `'>'`.
 - **Multiline opening tags** — Start tags that span multiple lines (e.g. in SVG or Tiled XML) are supported.
-- **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
+- **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, C-string helpers `xml_node_name_c_string` and `xml_node_content_c_string` (naming clarification: they return 0-terminated C strings; caller must free), comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
 - **XML comments** — `<!-- ... -->` are skipped by the parser (before tags and between nodes); see [docs/issues.md](docs/issues.md) #21.
 - **CDATA sections** — `<![CDATA[...]]>` are parsed and exposed as character data (no markup or entity interpretation inside); see [docs/issues.md](docs/issues.md) #40.
 
@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-The full API (e.g. `xml_open_document`, `xml_node_attributes`, `xml_easy_child`) is declared in [src/xml.h](src/xml.h).
+The full API (e.g. `xml_open_document`, `xml_node_attributes`, `xml_easy_child`, `xml_node_name_c_string`, `xml_node_content_c_string`) is declared in [src/xml.h](src/xml.h).
 
 
 ## License

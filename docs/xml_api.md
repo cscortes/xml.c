@@ -142,26 +142,22 @@ Frees all resources associated with the document. All xml_node and xml_string re
 **Warning:** Each element on the way must be unique
 
 
-## xml_easy_name
+## xml_node_name_c_string
 
-**uint8_t *** `xml_easy_name`(struct xml_node *node)
-
-- **node** — The node
-
-**Returns:** 0-terminated copy of node name
-
-**Warning:** User must free the result
-
-
-## xml_easy_content
-
-**uint8_t *** `xml_easy_content`(struct xml_node *node)
+**uint8_t *** `xml_node_name_c_string`(struct xml_node *node)
 
 - **node** — The node
 
-**Returns:** 0-terminated copy of node content
+**Returns:** 0-terminated C string copy of node name (caller must free)
 
-**Warning:** User must free the result
+
+## xml_node_content_c_string
+
+**uint8_t *** `xml_node_content_c_string`(struct xml_node *node)
+
+- **node** — The node
+
+**Returns:** 0-terminated C string copy of node content (caller must free)
 
 
 ## xml_string_length

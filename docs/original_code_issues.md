@@ -34,7 +34,7 @@ Only issues that are **reproducible or testable with cmocka** (or cmocka + ASan)
 
 3. **Other API NULL (e.g. `xml_easy_child(NULL, ...)`)**  
    - **Likelihood 2, Severity 5**  
-   - **Test:** Call `xml_easy_child(NULL, "Tag", 0)`, `xml_easy_name(NULL)`, `xml_easy_content(NULL)`; assert no crash and (if documented) return NULL/0.
+   - **Test:** Call `xml_easy_child(NULL, "Tag", 0)`, `xml_node_name_c_string(NULL)`, `xml_node_content_c_string(NULL)`; assert no crash and (if documented) return NULL/0.
 
 ---
 
