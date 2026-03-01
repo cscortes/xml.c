@@ -234,6 +234,34 @@ static void test_xml_parse_document_3(void **state) {
 
 
 /**
+ * xml_open_document from a temp file with exactly 8 bytes "<a></a>".
+ * Asserts document buffer length is exactly 8 and root is "a". Catches feof-style
+ * off-by-one (extra read would grow length or corrupt content) and verifies
+ * fread-driven loop and fclose path.
+ */
+static void test_open_document_temp_file_exact_bytes(void **state) {
+	(void)state;
+	FILE* f = tmpfile();
+	assert_non_null(f);
+	static char const content[] = "<a></a>";
+	size_t n = strlen(content);
+	assert_true(fwrite(content, 1, n, f) == n);
+	rewind(f);
+
+	struct xml_document* document = xml_open_document(f);
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "a"));
+	assert_int_equal(xml_document_buffer_length(document), n);
+
+	xml_document_free(document, true);
+	/* f was closed by xml_open_document; tmpfile() stream is already gone
+	 */
+}
+
+
+/**
  * xml_open_document with a minimal known-size file (exact buffer).
  * Parses input/minimal.xml (content "<a></a>") and asserts root name is "a",
  * no extra content (empty element, no children), and document buffer length
@@ -260,6 +288,53 @@ static void test_open_document_exact_buffer(void **state) {
 	assert_true(xml_document_buffer_length(document) == (size_t)file_size);
 
 	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_open_document on an empty file must return NULL (no read past end, no crash).
+ * Exercises the fread loop when first read returns 0 and ferror/fclose paths.
+ */
+static void test_open_document_empty_file(void **state) {
+	(void)state;
+	FILE* f = tmpfile();
+	assert_non_null(f);
+	/* Write nothing; position at 0, length 0
+	 */
+	rewind(f);
+
+	struct xml_document* document = xml_open_document(f);
+	assert_null(document);
+	/* f was closed by xml_open_document
+	 */
+}
+
+
+/**
+ * Parse with exact length (no trailing NUL in count). Ensures we do not read past
+ * the given length: success case "<r></r>" with length 8, failure case "<r>" with
+ * length 3. With the consume-at-end fix (position = length, no clamp to length-1),
+ * code that checks position < length before reading stays in bounds; Valgrind/ASan
+ * would catch any overread.
+ */
+static void test_parse_exact_length_boundary(void **state) {
+	(void)state;
+	SOURCE(src_ok, "<r></r>");
+	size_t len_ok = strlen((char const*)src_ok);
+
+	struct xml_document* doc = xml_parse_document(src_ok, len_ok);
+	assert_non_null(doc);
+	struct xml_node* root = xml_document_root(doc);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	assert_int_equal(xml_node_children(root), 0);
+	xml_document_free(doc, true);
+
+	SOURCE(src_bad, "<r>");
+	size_t len_bad = strlen((char const*)src_bad);
+	struct xml_document* doc_fail = xml_parse_document(src_bad, len_bad);
+	assert_null(doc_fail);
+	free(src_bad);
 }
 
 
@@ -518,12 +593,15 @@ static void test_realloc_failure_no_leak(void **state) {
 }
 
 
-static const struct CMUnitTest tests[] = {
+	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_0),
 	cmocka_unit_test(test_xml_parse_document_1),
 	cmocka_unit_test(test_xml_parse_document_2),
 	cmocka_unit_test(test_xml_parse_document_3),
+	cmocka_unit_test(test_open_document_temp_file_exact_bytes),
 	cmocka_unit_test(test_open_document_exact_buffer),
+	cmocka_unit_test(test_open_document_empty_file),
+	cmocka_unit_test(test_parse_exact_length_boundary),
 	cmocka_unit_test(test_attributes_in_memory_0),
 	cmocka_unit_test(test_attributes_in_memory_1),
 	cmocka_unit_test(test_attributes_in_memory_2),

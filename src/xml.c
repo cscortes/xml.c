@@ -375,17 +375,23 @@ static uint8_t xml_parser_peek(struct xml_parser* parser, size_t n) {
 /**
  * [PRIVATE]
  *
- * Moves the parser's position n bytes. If the new position would be out of
- * bounds, it will be converted to the bounds itself
+ * Moves the parser's position forward by n bytes. If the new position would
+ * be past the buffer end, it is set to parser->length (past end). Callers
+ * must not assume exactly n bytes were consumed when position reaches or
+ * exceeds length; code that reads parser->buffer[parser->position] must
+ * check position < parser->length first.
  */
 static void xml_parser_consume(struct xml_parser* parser, size_t n) {
 
 	/* Debug information
 	 */
 	#ifdef XML_PARSER_VERBOSE
+	size_t safe = (parser->position < parser->length)
+		? min(n, parser->length - parser->position) : 0;
 	char* consumed = alloca((n + 1) * sizeof(char));
-	memcpy(consumed, &parser->buffer[parser->position], min(n, parser->length - parser->position));
-	consumed[n] = 0;
+	if (safe > 0)
+		memcpy(consumed, &parser->buffer[parser->position], safe);
+	consumed[safe] = 0;
 
 	size_t message_buffer_length = 512;
 	char* message_buffer = alloca(512 * sizeof(char));
@@ -396,16 +402,11 @@ static void xml_parser_consume(struct xml_parser* parser, size_t n) {
 	#endif
 
 
-	/* Move the position forward
+	/* Move the position forward; clamp to past end (length) if out of bounds
 	 */
 	parser->position += n;
-
-	/* Don't go too far
-	 *
-	 * @warning Valid because parser->length must be greater than 0
-	 */
 	if (parser->position >= parser->length) {
-		parser->position = parser->length - 1;
+		parser->position = parser->length;
 	}
 }
 
@@ -419,6 +420,8 @@ static void xml_parser_consume(struct xml_parser* parser, size_t n) {
 static void xml_skip_whitespace(struct xml_parser* parser) {
 	xml_parser_info(parser, "whitespace");
 
+	if (parser->position >= parser->length)
+		return;
 	while (isspace(parser->buffer[parser->position])) {
 		if (parser->position + 1 >= parser->length) {
 			return;
@@ -944,12 +947,10 @@ struct xml_document* xml_open_document(FILE* source) {
 	size_t buffer_size = 1;	// TODO 4069
 	uint8_t* buffer = malloc(buffer_size * sizeof(uint8_t));
 
-	/* Read whole file into buffer
+	/* Read whole file into buffer (loop on fread result to avoid feof extra iteration)
 	 */
-	while (!feof(source)) {
-
-		/* Reallocate buffer
-		 */
+	size_t read;
+	for (;;) {
 		if (buffer_size - document_length < read_chunk) {
 			uint8_t* new_buffer = realloc(buffer, buffer_size + 2 * read_chunk);
 			if (!new_buffer) {
@@ -960,16 +961,21 @@ struct xml_document* xml_open_document(FILE* source) {
 			buffer = new_buffer;
 			buffer_size += 2 * read_chunk;
 		}
-
-		size_t read = fread(
-			&buffer[document_length],
-			sizeof(uint8_t), read_chunk,
-			source
-		);
-
+		read = fread(&buffer[document_length], sizeof(uint8_t), read_chunk, source);
 		document_length += read;
+		if (read != read_chunk)
+			break;
 	}
-	fclose(source);
+
+	if (ferror(source)) {
+		fclose(source);
+		free(buffer);
+		return 0;
+	}
+	if (fclose(source) != 0) {
+		free(buffer);
+		return 0;
+	}
 
 	/* Try to parse buffer
 	 */

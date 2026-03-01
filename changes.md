@@ -4,6 +4,20 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.6.2] — 2026-03-01
+
+### Fixed
+
+- **CMake deprecation** — `example/CMakeLists.txt` and `test/CMakeLists.txt`: `cmake_minimum_required(VERSION 3.1.0 ...)` updated to `3.14` to match the root and silence the "Compatibility with CMake < 3.10 will be removed" warning.
+- **xml_open_document** — Replaced `while (!feof(source))` with a fread-driven loop to avoid one extra iteration and indeterminate reads; added `ferror(source)` check after the read loop and `fclose(source)` return check so read/close errors are handled and the buffer is not leaked (see code_review.md §8–10).
+- **xml_parser_consume** — When `position + n` exceeds buffer length, position is now set to `parser->length` (past end) instead of `parser->length - 1`; callers that read `parser->buffer[parser->position]` must check `position < length` (documented). Added guard in `xml_skip_whitespace` so we never read past end. Verbose debug path uses a safe copy length (code_review.md §12).
+
+### Added
+
+- **Unit tests for file and boundary logic** — `test_open_document_temp_file_exact_bytes`: temp file with exactly 8 bytes `"<a></a>"`, asserts document length and root name (fread/feof/fclose path). `test_open_document_empty_file`: empty file, expects NULL. `test_parse_exact_length_boundary`: parse `"<r></r>"` with length 8 (success) and `"<r>"` with length 3 (failure) to ensure no read past given length.
+
+---
+
 ## [0.6.1] — 2026-03-01
 
 ### Fixed
