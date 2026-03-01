@@ -1,42 +1,108 @@
-xml.c
-=====
+# xml.c
 
-Similar to the [GLib Markup parser](http://developer.gnome.org/glib/2.34/glib-Simple-XML-Subset-Parser.html),
-which also just parses an xml subset, [xml.c](https://github.com/ooxi/xml.c) is
-a simple, small and self contained xml parser in one file. Ideal for embedding
-into other projects without the need for big external dependencies.
+- Parses an XML subset (comparable to other minimal XML/markup parsers), in short an XML reader.
+- Simple, small, and self-contained in one file.
+- Easy to embed in other projects without large external dependencies.
+- See **XML compliance** below for what is supported and what is not.
 
-[![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions)
+**This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-
-Downloads
----------
-
-All releases are based on master, so the preferred way of using xml.c is adding
-the repository as [git submodule](http://git-scm.com/book/en/Git-Tools-Submodules).
-
-If you prefer formal releases, check out the [release tags](https://github.com/ooxi/xml.c/tags).
+[![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
 
-Building xml.c
---------------
+## Credits
 
-Since xml.c uses [CMake](http://www.cmake.org/), building the library is fairly
-easy
+xml.c was originally written by [ooxi/xml.c](https://github.com/ooxi/xml.c). This fork continues development as a **modernization project**: we add features, tests, docs, and bug fixes while keeping the library small and embeddable. **To use or contribute to the modernized codebase, clone or link to this repository** ([cscortes/xml.c](https://github.com/cscortes/xml.c)).
 
-    $ git clone https://github.com/ooxi/xml.c.git xml.c
-    $ mkdir xml.c/build; cd xml.c/build
+
+## Goals (this sprint)
+
+1. Add new features not in the original codebase.
+2. Add test cases for coverage and increase quality.
+3. Add documentation for end developers.
+4. Fix any bugs we find along the way.
+5. Increase the level of minimal compatibility with XML standards.
+6. Use AI as a pair programmer to help with these changes.
+
+
+## Prerequisites
+
+Currently required to build:
+
+- [CMake](https://cmake.org/) 3.1 or later
+- A C11-capable C compiler (e.g. GCC, Clang)
+- A C++ compiler is only needed if you want to run the existing C++ tests; we plan to remove that requirement (see below).
+
+**Broader audience (direction):** We want to reach more developers. Planned steps include:
+- **Plain Makefile** — so you can build with just `make` and a C compiler, without CMake.
+- **ANSI C (C89/C90)** — so the library builds on older compilers and embedded toolchains. The codebase is currently C11; moving to ANSI C is a goal for this modernization project.
+- **C-only test suite** — we aim to drop the C++ compiler requirement for testing. Moving to a C-only test framework such as [cmocka](https://cmocka.org/) would let the full test suite run with only a C compiler; existing C++ tests would be ported to C or replaced.
+
+## Downloads
+
+To use this fork, clone this repository or add it as a [git submodule](https://git-scm.com/book/en/Git-Tools-Submodules). Development is on `master`.
+
+
+## Building xml.c
+
+Clone the repo and build with CMake:
+
+    $ git clone https://github.com/cscortes/xml.c.git xml.c
+    $ mkdir xml.c/build && cd xml.c/build
     $ cmake -DCMAKE_BUILD_TYPE=Release ..
-    $ make && make test
+    $ make && ctest --output-on-failure
 
-If you need a debug build, specify `CMAKE_BUILD_TYPE` as `Debug` and rebuild.
+For a debug build: `cmake -DCMAKE_BUILD_TYPE=Debug ..` then rebuild.
 
 
-Usage
------
+## Development (this fork)
 
-This example is also [included in the repository](https://github.com/ooxi/xml.c/blob/master/test/example.c)
-and will be build by default. Most of the code is C boilerplate, the important
+This repo is developed against the fork at [cscortes/xml.c](https://github.com/cscortes/xml.c):
+
+- **origin** — this fork: `https://github.com/cscortes/xml.c.git` (default for `git push` / `git pull`)
+- **upstream** — original: `https://github.com/ooxi/xml.c.git`
+
+To sync from the original: `git fetch upstream && git merge upstream/master`.
+
+See [docs/programming_style.md](docs/programming_style.md) for style guidelines (including grammar for user-facing messages).
+
+
+## Current xml.c XML compliance
+
+xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 1.0](https://www.w3.org/TR/xml/): it rejects some valid XML and accepts some input that is not well-formed XML. The following table summarizes compliance with the bare XML standard.
+
+| Feature | XML 1.0 | xml.c |
+|---------|---------|-------|
+| **Document** | | |
+| XML declaration `<?xml ...?>` | Optional | **No** — not recognized; may misparse or fail |
+| Single root element | Required | **Yes** — one root element only |
+| **Elements** | | |
+| Tag names (Name production) | Letter / `_` / `:` start; then Name chars | **No** — any chars until `>` or space (e.g. accepts `<2tag>`) |
+| Empty-element tags `<foo/>` | Allowed | **Yes** |
+| Proper nesting / matching tags | Required | **Yes** |
+| **Attributes** | | |
+| `name="value"` or `name='value'` | Required | **Yes** |
+| Unique attribute names per element | Required | **No** — duplicates accepted |
+| Entity/character refs in values | Allowed, must be expanded | **No** — not expanded |
+| **Content** | | |
+| Text content | Allowed | **Yes** |
+| Character references `&#N;` / `&#xN;` | Required to be expanded | **No** — not supported |
+| Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **No** — raw `&` accepted (invalid per XML) |
+| CDATA sections `<![CDATA[...]]>` | Allowed | **No** — not supported |
+| **Other** | | |
+| Comments `<!-- ... -->` | Allowed | **No** — not recognized; may misparse |
+| Processing instructions `<?...?>` | Allowed | **No** — not recognized |
+| DTD / DOCTYPE | Optional | **No** — not supported |
+| Namespaces | Common practice (Namespaces in XML) | **No** — no namespace handling |
+| Encoding declaration / conversion | Declared and applied | **No** — no conversion; input treated as raw bytes |
+
+**Summary:** Use xml.c only for controlled, simple XML-like input (elements, attributes, text). For standards-compliant or arbitrary XML, use a full parser (e.g. libxml2, Expat).
+
+
+## Usage
+
+This example is also included in the repository ([test/example.c](test/example.c))
+and will be built by default. Most of the code is C boilerplate, the important
 functions are `xml_parse_document`, `xml_document_root`, `xml_node_name`,
 `xml_node_content` and `xml_node_child` / `xml_node_children`.
 
@@ -79,7 +145,7 @@ int main(int argc, char** argv) {
 	 * will verbosely tell you about the parsing process
 	 */
 	if (!document) {
-		printf("Could parse document\n");
+		printf("Error: Could not parse document.\n");
 		exit(EXIT_FAILURE);
 	}
 	struct xml_node* root = xml_document_root(document);
@@ -116,11 +182,34 @@ int main(int argc, char** argv) {
 }
 ```
 
-Another usage example can be found in the [unit case](https://github.com/ooxi/xml.c/blob/master/test/test-xml.c).
+The full API (e.g. `xml_open_document`, `xml_node_attributes`, `xml_easy_child`) is declared in [src/xml.h](src/xml.h).
 
 
-License
--------
+## License
 
-[libpng/zlib](https://github.com/ooxi/xml.c/blob/master/LICENSE) (BSD)
+BSD-style (same terms as [libpng/zlib](https://github.com/ooxi/xml.c/blob/master/LICENSE)):
 
+```
+Copyright (c) 2012 ooxi/xml.c
+    https://github.com/ooxi/xml.c
+
+This software is provided 'as-is', without any express or implied warranty. In
+no event will the authors be held liable for any damages arising from the use of
+this software.
+
+Permission is granted to anyone to use this software for any purpose, including
+commercial applications, and to alter it and redistribute it freely, subject to
+the following restrictions:
+
+ 1. The origin of this software must not be misrepresented; you must not claim
+    that you wrote the original software. If you use this software in a product,
+    an acknowledgment in the product documentation would be appreciated but is
+    not required.
+
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+
+ 3. This notice may not be removed or altered from any source distribution.
+```
+
+The full text is in [LICENSE](LICENSE) in this repository.
