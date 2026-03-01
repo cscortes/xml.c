@@ -29,7 +29,7 @@ Guidelines for consistent, clear code in this project. The rules below are deriv
 
 ## Comments and documentation
 
-- **File header:** Source and header files start with the **standard BSD-style copyright block** (see any `src/*.c` or `test/*.c` file). Do not remove or alter the notice.
+- **File header:** Source and header files start with the **standard BSD-style copyright block** (see any `src/*.c`, `example/example.c`, or `test/unit-c.c`). Do not remove or alter the notice.
 - **Block comments:** Use **`/* ... */`** for block comments. Multi-line blocks often use a leading `/*` and a trailing ` */` on the next line (with a space before `*/`). Single-line comments can use `//` in C++ or where already used (e.g. TODOs).
 - **API labels:** In the library, mark comment blocks with **[PRIVATE]**, **[PUBLIC API]**, or **[OPAQUE API]** so readers can tell visibility. **[OPAQUE API]** is used for types whose internals are not part of the public contract.
 - **Doxygen-style:** Use **`@param`**, **`@return`**, **`@warning`**, **`@see`** in block comments for functions that are part of the public or internal API. Use **“iff”** for “if and only if” in descriptions (e.g. “@return the node iff parsing was successful”).
@@ -81,7 +81,7 @@ All text that users see (e.g. `printf`, `fprintf`, log output, error strings) mu
 ### Where this applies
 
 - `README.md` and other docs that show code with user-visible strings.
-- Example and test programs (`example.c`, `test/*.c`, `test/*.cpp`).
+- Example and test programs (`example/example.c`, `test/unit-c.c`).
 - Library code that prints to stdout/stderr (e.g. `xml_parser_error`, `xml_parser_info`).
 
 When adding or changing any user-facing string, check it against this section.

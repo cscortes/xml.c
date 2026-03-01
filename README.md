@@ -31,12 +31,12 @@ Currently required to build:
 
 - [CMake](https://cmake.org/) 3.1 or later
 - A C11-capable C compiler (e.g. GCC, Clang)
-- A C++ compiler is only needed if you want to run the existing C++ tests; we plan to remove that requirement (see below).
+- No C++ compiler is required; the test suite is C-only.
 
 **Broader audience (direction):** We want to reach more developers. Planned steps include:
 - **Plain Makefile** — so you can build with just `make` and a C compiler, without CMake.
 - **ANSI C (C89/C90)** — so the library builds on older compilers and embedded toolchains. The codebase is currently C11; moving to ANSI C is a goal for this modernization project.
-- **C-only test suite** — we aim to drop the C++ compiler requirement for testing. Moving to a C-only test framework such as [cmocka](https://cmocka.org/) would let the full test suite run with only a C compiler; existing C++ tests would be ported to C or replaced.
+- **C-only test suite** — the project uses a C-only test suite (see `test/unit-c.c`). A framework such as [cmocka](https://cmocka.org/) may be adopted so tests remain C-only and easy to run with a single compiler.
 
 ## Downloads
 
@@ -101,7 +101,7 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 
 ## Usage
 
-This example is also included in the repository ([test/example.c](test/example.c))
+This example is also included in the repository ([example/example.c](example/example.c))
 and will be built by default. Most of the code is C boilerplate, the important
 functions are `xml_parse_document`, `xml_document_root`, `xml_node_name`,
 `xml_node_content` and `xml_node_child` / `xml_node_children`.

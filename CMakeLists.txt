@@ -1,9 +1,9 @@
 # Project setup
-project(xml C CXX)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+project(xml C)
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "2")
-set(VERSION_PATCH "0")
-cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR) 
+set(VERSION_PATCH "0") 
 
 
 # Define main library target
@@ -44,6 +44,9 @@ target_include_directories(
 		"${CMAKE_CURRENT_LIST_DIR}/src/"
 )
 
+
+# Example program
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/example")
 
 # Build unit cases
 enable_testing()
