@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.6.3 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.6.4 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 

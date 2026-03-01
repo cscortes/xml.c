@@ -5,8 +5,16 @@
 #ifndef XML_COMMON_H
 #define XML_COMMON_H
 
-#define min(X, Y) (((X) < (Y)) ? (X) : (Y))
-#define max(X, Y) (((X) > (Y)) ? (X) : (Y))
+#include <stddef.h>
+
+static inline size_t MIN(size_t a, size_t b) {
+	return a < b ? a : b;
+}
+
+static inline size_t MAX(size_t a, size_t b) {
+	return a > b ? a : b;
+}
+
 #define UNUSED(x) ((void)(x))
 
 #endif

@@ -92,6 +92,7 @@ This document defines the test categories for the xml.c library, inventories the
 | `test_attributes_from_file_0` | unit-c.c | File; first child has 0 attributes. | input/test-attributes-0.xml |
 | `test_attributes_from_file_1` | unit-c.c | File; first child has 1 attribute. | input/test-attributes-1.xml |
 | `test_attributes_from_file_2` | unit-c.c | File; first child has 2 attributes. | input/test-attributes-2.xml |
+| `test_tiled_svg_style_multiline_opening_tag` | unit-c.c | Tiled/SVG-style: opening tag spans multiple lines with attributes; would have caught upstream #38 (parse error). | SOURCE (in-memory) |
 
 **Suggested tests**
 

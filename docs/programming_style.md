@@ -8,7 +8,7 @@ Guidelines for consistent, clear code in this project. The rules below are deriv
 
 - **Indentation:** Use **tabs** (not spaces) for indentation. All C and C++ sources use tabs.
 - **Braces:** Opening brace `{` on the **same line** as the function or control statement (K&R style). Closing brace `}` on its own line.
-- **Blank lines:** Use one or two blank lines between logical sections (e.g. between functions). Multiple blank lines are used sparingly to separate larger sections.
+- **Blank lines:** Use **two blank lines** between function definitions. Multiple blank lines are used sparingly to separate larger sections (e.g. groups of related functions).
 - **Line length:** Prefer readable line length; long conditions may be split with the operator at the start of the continuation line (e.g. `||\t('/' != ...)`).
 
 ## Naming

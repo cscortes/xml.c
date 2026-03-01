@@ -119,6 +119,7 @@ static void test_xml_parse_document_0(void **state) {
 	xml_document_free(document, true);
 }
 
+
 /**
  * Tries to parse a document containing multiple tags
  */
@@ -358,6 +359,7 @@ static void test_attributes_in_memory_0(void **state) {
 	xml_document_free(document, true);
 }
 
+
 /**
  * Attributes from in-memory buffer: node with 1 attribute.
  * Fails when parser stops at first space (docs/testable_issues_priority.md §2).
@@ -379,6 +381,7 @@ static void test_attributes_in_memory_1(void **state) {
 
 	xml_document_free(document, true);
 }
+
 
 /**
  * Attributes from in-memory buffer: node with 2 attributes.
@@ -404,6 +407,7 @@ static void test_attributes_in_memory_2(void **state) {
 	xml_document_free(document, true);
 }
 
+
 /**
  * Attributes from file: node with 0 attributes.
  * xml_open_document(handle); input/test-attributes-0.xml.
@@ -424,6 +428,7 @@ static void test_attributes_from_file_0(void **state) {
 
 	xml_document_free(document, true);
 }
+
 
 /**
  * Attributes from file: node with 1 attribute.
@@ -447,6 +452,7 @@ static void test_attributes_from_file_1(void **state) {
 
 	xml_document_free(document, true);
 }
+
 
 /**
  * Attributes from file: node with 2 attributes.
@@ -472,6 +478,55 @@ static void test_attributes_from_file_2(void **state) {
 	assert_true(string_equals(xml_node_attribute_content(element, 0), "2"));
 	assert_true(string_equals(xml_node_attribute_name(element, 1), "value_2"));
 	assert_true(string_equals(xml_node_attribute_content(element, 1), "Hello"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Tiled/SVG-style XML: opening tag spans multiple lines with attributes.
+ * Upstream #38 reported parse errors on such input; the fix was to parse the
+ * full opening tag up to '>' (and any newline handling in attribute parsing).
+ * This test would have caught that regression: parse must succeed and yield
+ * the element with its attributes and child.
+ *
+ * @see docs/issues.md (#38, #39 part, #33)
+ */
+static void test_tiled_svg_style_multiline_opening_tag(void **state) {
+	(void)state;
+	SOURCE(source, ""
+		"<Root>\n"
+		"<Element\n"
+		"  id=\"one\"\n"
+		"  name=\"foo\">\n"
+		"  <Child>content</Child>\n"
+		"</Element>\n"
+		"</Root>\n"
+	);
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (!document) {
+		free(source);
+		assert_non_null(document);
+	}
+
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "Root"));
+
+	struct xml_node* element = xml_node_child(root, 0);
+	assert_non_null(element);
+	assert_true(string_equals(xml_node_name(element), "Element"));
+	assert_int_equal(xml_node_attributes(element), 2);
+	assert_true(string_equals(xml_node_attribute_name(element, 0), "id"));
+	assert_true(string_equals(xml_node_attribute_content(element, 0), "one"));
+	assert_true(string_equals(xml_node_attribute_name(element, 1), "name"));
+	assert_true(string_equals(xml_node_attribute_content(element, 1), "foo"));
+
+	struct xml_node* child = xml_node_child(element, 0);
+	assert_non_null(child);
+	assert_true(string_equals(xml_node_name(child), "Child"));
+	assert_true(string_equals(xml_node_content(child), "content"));
 
 	xml_document_free(document, true);
 }
@@ -608,6 +663,7 @@ static void test_realloc_failure_no_leak(void **state) {
 	cmocka_unit_test(test_attributes_from_file_0),
 	cmocka_unit_test(test_attributes_from_file_1),
 	cmocka_unit_test(test_attributes_from_file_2),
+	cmocka_unit_test(test_tiled_svg_style_multiline_opening_tag),
 	cmocka_unit_test(test_find_node_by_tag_name),
 	cmocka_unit_test(test_parse_error_at_end_of_buffer),
 	cmocka_unit_test(test_realloc_failure_no_leak),

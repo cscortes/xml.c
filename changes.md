@@ -4,6 +4,20 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.6.4] — 2026-03-01
+
+### Added
+
+- **Tiled/SVG-style test (#38)** — `test_tiled_svg_style_multiline_opening_tag`: parses XML with an opening tag that spans multiple lines and has attributes; would have caught upstream parse error. Parser now tokenizes attribute delimiters on space and newline (`XML_ATTRIBUTE_TOKEN_DELIMITERS()`).
+
+### Changed
+
+- **min/max → MIN/MAX** — Replaced `min`/`max` macros in [src/xml_common.h](src/xml_common.h) with `static inline` functions `MIN(size_t, size_t)` and `MAX(size_t, size_t)` (macro-style names). All call sites in [src/xml.c](src/xml.c) use `MIN`.
+- **Attribute token delimiters** — Replaced literal `" \n\t\r"` in [src/xml.c](src/xml.c) with inline function `XML_ATTRIBUTE_TOKEN_DELIMITERS()`.
+- **Style: 2 blank lines between functions** — [docs/programming_style.md](docs/programming_style.md) now requires two blank lines between function definitions; [src/xml.c](src/xml.c), [test/unit-c.c](test/unit-c.c), and [test/unit-c-null.c](test/unit-c-null.c) normalized to match. [docs/test_spec.md](docs/test_spec.md) lists the new Tiled/SVG test in the Attributes inventory.
+
+---
+
 ## [0.6.3] — 2026-03-01
 
 ### Fixed

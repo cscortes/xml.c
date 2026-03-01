@@ -39,10 +39,13 @@
 #include <stdlib.h>
 
 
+/** Delimiters for splitting tag name and attr="value" tokens (space, newline, tab, CR). */
+static inline const char* XML_ATTRIBUTE_TOKEN_DELIMITERS(void) {
+	return " \n\t\r";
+}
 
 
-
-/* 
+/*
  * public domain strtok_r() by Charlie Gordon
  *
  *   from comp.lang.c  9/14/2007
@@ -77,10 +80,6 @@ static char* xml_strtok_r(char *str, const char *delim, char **nextp) {
 
 	return ret;
 }
-
-
-
-
 
 
 /**
@@ -131,9 +130,6 @@ struct xml_document {
 };
 
 
-
-
-
 /**
  * [PRIVATE]
  *
@@ -157,9 +153,6 @@ enum xml_parser_offset {
 };
 
 
-
-
-
 /**
  * [PRIVATE]
  *
@@ -176,7 +169,6 @@ static size_t get_zero_terminated_array_attributes(struct xml_attribute** attrib
 }
 
 
-
 /**
  * [PRIVATE]
  *
@@ -191,7 +183,6 @@ static size_t get_zero_terminated_array_nodes(struct xml_node** nodes) {
 
 	return elements;
 }
-
 
 
 /**
@@ -217,7 +208,6 @@ static _Bool xml_string_equals(struct xml_string* a, struct xml_string* b) {
 }
 
 
-
 /**
  * [PRIVATE]
  */
@@ -235,7 +225,6 @@ static uint8_t* xml_string_clone(struct xml_string* s) {
 }
 
 
-
 /**
  * [PRIVATE]
  *
@@ -247,7 +236,6 @@ static uint8_t* xml_string_clone(struct xml_string* s) {
 static void xml_string_free(struct xml_string* string) {
 	free(string);
 }
-
 
 
 /**
@@ -264,6 +252,7 @@ static void xml_attribute_free(struct xml_attribute* attribute) {
 	}
 	free(attribute);
 }
+
 
 /**
  * [PRIVATE]
@@ -295,7 +284,6 @@ static void xml_node_free(struct xml_node* node) {
 }
 
 
-
 /**
  * [PRIVATE]
  *
@@ -320,7 +308,7 @@ static void xml_parser_error(struct xml_parser* parser, enum xml_parser_offset o
 	int row = 0;
 	int column = 0;
 
-	size_t character = min(parser->length, parser->position + (size_t)(offset < 0 ? 0 : offset));
+	size_t character = MIN(parser->length, parser->position + (size_t)(offset < 0 ? 0 : offset));
 
 	size_t position = 0; for (; position < character; ++position) {
 		column++;
@@ -343,7 +331,6 @@ static void xml_parser_error(struct xml_parser* parser, enum xml_parser_offset o
 		);
 	}
 }
-
 
 
 /**
@@ -371,7 +358,6 @@ static uint8_t xml_parser_peek(struct xml_parser* parser, size_t n) {
 }
 
 
-
 /**
  * [PRIVATE]
  *
@@ -387,7 +373,7 @@ static void xml_parser_consume(struct xml_parser* parser, size_t n) {
 	 */
 	#ifdef XML_PARSER_VERBOSE
 	size_t safe = (parser->position < parser->length)
-		? min(n, parser->length - parser->position) : 0;
+		? MIN(n, parser->length - parser->position) : 0;
 	char* consumed = alloca((n + 1) * sizeof(char));
 	if (safe > 0)
 		memcpy(consumed, &parser->buffer[parser->position], safe);
@@ -411,7 +397,6 @@ static void xml_parser_consume(struct xml_parser* parser, size_t n) {
 }
 
 
-
 /**
  * [PRIVATE]
  * 
@@ -430,7 +415,6 @@ static void xml_skip_whitespace(struct xml_parser* parser) {
 		}
 	}
 }
-
 
 
 /**
@@ -462,13 +446,16 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 
 	tmp = (char*) xml_string_clone(tag_open);
 
-	token = xml_strtok_r(tmp, " ", &rest); // skip the first value
+	/* Split on space and newline so multiline opening tags (Tiled/SVG-style) work:
+	 * first token is the tag name only; rest are attr="value" tokens. See docs/issues.md #38, #39.
+	 */
+	token = xml_strtok_r(tmp, XML_ATTRIBUTE_TOKEN_DELIMITERS(), &rest);
 	if(token == NULL) {
 		goto cleanup;
 	}
 	tag_open->length = strlen(token);
 
-	for(token=xml_strtok_r(NULL," ", &rest); token!=NULL; token=xml_strtok_r(NULL," ", &rest)) {
+	for(token = xml_strtok_r(NULL, XML_ATTRIBUTE_TOKEN_DELIMITERS(), &rest); token != NULL; token = xml_strtok_r(NULL, XML_ATTRIBUTE_TOKEN_DELIMITERS(), &rest)) {
 		str_name = malloc(strlen(token)+1);
 		str_content = malloc(strlen(token)+1);
 		// %s=\"%s\" wasn't working for some reason, ugly hack to make it work
@@ -524,7 +511,6 @@ cleanup:
 }
 
 
-
 /**
  * [PRIVATE]
  *
@@ -569,7 +555,6 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 	name->length = length;
 	return name;
 }
-
 
 
 /**
@@ -632,7 +617,6 @@ static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 }
 
 
-
 /**
  * [PRIVATE]
  *
@@ -666,7 +650,6 @@ static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
 	 */
 	return xml_parse_tag_end(parser);
 }
-
 
 
 /**
@@ -725,7 +708,6 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	content->length = length;
 	return content;
 }
-
 
 
 /**
@@ -891,9 +873,6 @@ exit_failure:
 }
 
 
-
-
-
 /**
  * [PUBLIC API]
  */
@@ -931,7 +910,6 @@ struct xml_document* xml_parse_document(uint8_t* buffer, size_t length) {
 
 	return document;
 }
-
 
 
 /**
@@ -989,7 +967,6 @@ struct xml_document* xml_open_document(FILE* source) {
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1006,7 +983,6 @@ void xml_document_free(struct xml_document* document, bool free_buffer) {
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1016,7 +992,6 @@ struct xml_node* xml_document_root(struct xml_document* document) {
 	}
 	return document->root;
 }
-
 
 
 /**
@@ -1030,7 +1005,6 @@ size_t xml_document_buffer_length(struct xml_document* document) {
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1040,7 +1014,6 @@ struct xml_string* xml_node_name(struct xml_node* node) {
 	}
 	return node->name;
 }
-
 
 
 /**
@@ -1054,7 +1027,6 @@ struct xml_string* xml_node_content(struct xml_node* node) {
 }
 
 
-
 /**
  * [PUBLIC API]
  *
@@ -1066,7 +1038,6 @@ size_t xml_node_children(struct xml_node* node) {
 	}
 	return get_zero_terminated_array_nodes(node->children);
 }
-
 
 
 /**
@@ -1084,7 +1055,6 @@ struct xml_node* xml_node_child(struct xml_node* node, size_t child) {
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1094,7 +1064,6 @@ size_t xml_node_attributes(struct xml_node* node) {
 	}
 	return get_zero_terminated_array_attributes(node->attributes);
 }
-
 
 
 /**
@@ -1112,7 +1081,6 @@ struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribu
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1126,7 +1094,6 @@ struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attr
 
 	return node->attributes[attribute]->content;
 }
-
 
 
 /**
@@ -1198,7 +1165,6 @@ struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1209,7 +1175,6 @@ uint8_t* xml_easy_name(struct xml_node* node) {
 
 	return xml_string_clone(xml_node_name(node));
 }
-
 
 
 /**
@@ -1224,7 +1189,6 @@ uint8_t* xml_easy_content(struct xml_node* node) {
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1236,7 +1200,6 @@ size_t xml_string_length(struct xml_string* string) {
 }
 
 
-
 /**
  * [PUBLIC API]
  */
@@ -1245,7 +1208,7 @@ void xml_string_copy(struct xml_string* string, uint8_t* buffer, size_t length) 
 		return;
 	}
 
-	length = min(length, string->length);
+	length = MIN(length, string->length);
 
 	memcpy(buffer, string->buffer, length);
 }
