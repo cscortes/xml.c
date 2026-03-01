@@ -523,12 +523,14 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 	size_t start = parser->position;
 	size_t length = 0;
 
-	/* Parse until `>' or a whitespace is reached
+	/* Parse until `>' or a whitespace is reached. Use raw character at
+	 * parser->position so we stop at the first space; then we expect `>'
+	 * and fail for tags with attributes (see docs/testable_issues_priority.md §2).
 	 */
 	while (start + length < parser->length) {
-		uint8_t current = xml_parser_peek(parser, CURRENT_CHARACTER);
+		uint8_t current = parser->buffer[parser->position];
 
-		if (('>' == current) || isspace(current)) {
+		if (('>' == current) || isspace((unsigned char)current)) {
 			break;
 		} else {
 			xml_parser_consume(parser, 1);
@@ -538,7 +540,7 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 
 	/* Consume `>'
 	 */
-	if ('>' != xml_parser_peek(parser, CURRENT_CHARACTER)) {
+	if (parser->position >= parser->length || '>' != parser->buffer[parser->position]) {
 		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_tag_end::expected tag end");
 		return 0;
 	}
@@ -557,10 +559,43 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 /**
  * [PRIVATE]
  *
- * Parses an opening XML tag without attributes
+ * Parses the full content of an opening tag (name and optional attributes) up to
+ * and including the closing `>'. Used so that xml_find_attributes can parse
+ * attributes from the same buffer.
+ *
+ * ---( Example )---
+ * tag_name attr="value">
+ * ---
+ */
+static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) {
+	xml_parser_info(parser, "open_tag_content");
+	size_t start = parser->position;
+
+	while (parser->position < parser->length && '>' != parser->buffer[parser->position]) {
+		xml_parser_consume(parser, 1);
+	}
+
+	if (parser->position >= parser->length || '>' != parser->buffer[parser->position]) {
+		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_open_tag_content::expected tag end");
+		return 0;
+	}
+	xml_parser_consume(parser, 1);
+
+	struct xml_string* content = malloc(sizeof(struct xml_string));
+	content->buffer = &parser->buffer[start];
+	content->length = (parser->position - 1) - start;
+	return content;
+}
+
+
+/**
+ * [PRIVATE]
+ *
+ * Parses an opening XML tag (name and optional attributes).
  *
  * ---( Example )---
  * <tag_name>
+ * <tag_name attr="value">
  * ---
  */
 static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
@@ -575,9 +610,9 @@ static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 	}
 	xml_parser_consume(parser, 1);
 
-	/* Consume tag name
+	/* Consume full tag content (name and optional attributes) up to `>'
 	 */
-	return xml_parse_tag_end(parser);
+	return xml_parse_open_tag_content(parser);
 }
 
 

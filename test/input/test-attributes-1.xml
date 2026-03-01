@@ -1,0 +1,5 @@
+<Document>
+	<Element id="one">
+		<With>Child</With>
+	</Element>
+</Document>

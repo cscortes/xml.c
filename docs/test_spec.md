@@ -36,6 +36,7 @@ This document defines the test categories for the xml.c library, inventories the
 | `test_xml_parse_document_0` | unit-c.c | Single tag; assert root name and content. | SOURCE (in-memory) |
 | `test_xml_parse_document_1` | unit-c.c | Nested Parent/Child; children by index; content. | SOURCE (in-memory) |
 | `test_xml_parse_document_2` | unit-c.c | Deep path; multiple children; easy_child, easy_name, easy_content. | SOURCE (in-memory) |
+| `test_parse_attributes_in_memory` | unit-c.c | In-memory SOURCE; first child has 1 attribute "attr"/"value". | SOURCE (in-memory) |
 | `test_find_node_by_tag_name` | unit-c.c | Depth-first search by tag name; multiple matches. | SOURCE (in-memory) |
 
 **Suggested tests**
@@ -52,11 +53,11 @@ This document defines the test categories for the xml.c library, inventories the
 | Test | File | Description | Fixture |
 |------|------|-------------|---------|
 | `test_xml_parse_document_3` | unit-c.c | Opens file; root, Element, With, Child path. | input/test.xml |
-| `test_xml_parse_attributes` | unit-c.c | Opens file; expects 2 attributes on first child. **Currently fails** — parser does not support opening tags with attributes (space before `>`). | input/test-attributes.xml |
+| `test_attributes_from_file_0/1/2` | unit-c.c | Opens file; first child has 0, 1, or 2 attributes. | input/test-attributes-0.xml, -1.xml, -2.xml |
 
 **Suggested tests**
 
-- Keep `test_xml_parse_document_3`. Fix parser so `test_xml_parse_attributes` passes (or document in spec: blocked on parser fix for attributes).
+- Keep `test_xml_parse_document_3`.
 - Optional: `test_open_document_buffer_length` — small known file or fmemopen; parse with `xml_open_document`, assert root and optionally `document->buffer.length` equals expected (to lock feof/read behavior).
 
 ---
@@ -83,12 +84,16 @@ This document defines the test categories for the xml.c library, inventories the
 
 | Test | File | Description | Fixture |
 |------|------|-------------|---------|
-| `test_xml_parse_attributes` | unit-c.c | File-based; 2 attributes on first child. Fails with current parser. | input/test-attributes.xml |
+| `test_attributes_in_memory_0` | unit-c.c | In-memory; first child has 0 attributes. | SOURCE (in-memory) |
+| `test_attributes_in_memory_1` | unit-c.c | In-memory; first child has 1 attribute. | SOURCE (in-memory) |
+| `test_attributes_in_memory_2` | unit-c.c | In-memory; first child has 2 attributes. | SOURCE (in-memory) |
+| `test_attributes_from_file_0` | unit-c.c | File; first child has 0 attributes. | input/test-attributes-0.xml |
+| `test_attributes_from_file_1` | unit-c.c | File; first child has 1 attribute. | input/test-attributes-1.xml |
+| `test_attributes_from_file_2` | unit-c.c | File; first child has 2 attributes. | input/test-attributes-2.xml |
 
 **Suggested tests**
 
-- `test_parse_attributes_in_memory` — SOURCE with `<Root><Node attr="value">text</Node></Root>`; assert document non-NULL; first child has 1 attribute (name "attr", content "value"). Blocked on parser fix for attributes.
-- Keep file-based test once parser is fixed.
+- Both attribute tests are implemented; they verify attribute count, name, and content. No further tests required for this category.
 
 ---
 
@@ -156,7 +161,7 @@ All of the following are implemented in [test/unit-c-null.c](../test/unit-c-null
 | File | Purpose |
 |------|---------|
 | [test/input/test.xml](../test/input/test.xml) | Minimal file-based document; no attributes; root, Prefix, Element, With, Child. |
-| [test/input/test-attributes.xml](../test/input/test-attributes.xml) | Document with element that has attributes (`value="2"`, `value_2="Hello"`). Parser currently fails on opening tags with attributes. |
+| [test/input/test-attributes.xml](../test/input/test-attributes.xml) | Document with element that has attributes (`value="2"`, `value_2="Hello"`). |
 
 ---
 

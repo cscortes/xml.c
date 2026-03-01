@@ -4,6 +4,18 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.3.2] — 2025-02-28
+
+### Fixed
+
+- **Opening tags with attributes** — Parser now uses `xml_parse_open_tag_content` for opening tags so that elements with attributes (e.g. `<Node attr="value">`) parse correctly instead of failing at the first space (see docs/testable_issues_priority.md §2).
+
+### Added
+
+- **Attribute tests (0, 1, 2)** — Six tests: `test_attributes_in_memory_0/1/2` (buffer) and `test_attributes_from_file_0/1/2` (fixtures). Fixtures `test/input/test-attributes-0.xml`, `test-attributes-1.xml`, `test-attributes-2.xml`; CMake copies them into the test build tree.
+
+---
+
 ## [0.3.1] — 2025-02-28
 
 ### Added

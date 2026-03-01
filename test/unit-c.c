@@ -232,33 +232,141 @@ static void test_xml_parse_document_3(void **state) {
 
 
 /**
- * Test parsing of attributes
- *
- * @author Isty001
- * @see https://github.com/Isty001/
+ * Attributes from in-memory buffer: node with 0 attributes.
+ * xml_parse_document(source, len); no attributes on first child.
  */
-static void test_xml_parse_attributes(void **state) {
+static void test_attributes_in_memory_0(void **state) {
 	(void)state;
-	#define FILE_NAME "input/test-attributes.xml"
-	FILE* handle = fopen(FILE_NAME, "rb");
+	SOURCE(source, "<Root><Node>text</Node></Root>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
+
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 0);
+
+	xml_document_free(document, true);
+}
+
+/**
+ * Attributes from in-memory buffer: node with 1 attribute.
+ * Fails when parser stops at first space (docs/testable_issues_priority.md §2).
+ */
+static void test_attributes_in_memory_1(void **state) {
+	(void)state;
+	SOURCE(source, "<Root><Node attr=\"value\">text</Node></Root>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
+
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 1);
+	assert_true(string_equals(xml_node_attribute_name(element, 0), "attr"));
+	assert_true(string_equals(xml_node_attribute_content(element, 0), "value"));
+
+	xml_document_free(document, true);
+}
+
+/**
+ * Attributes from in-memory buffer: node with 2 attributes.
+ * Fails when parser stops at first space (docs/testable_issues_priority.md §2).
+ */
+static void test_attributes_in_memory_2(void **state) {
+	(void)state;
+	SOURCE(source, "<Root><Node a=\"1\" b=\"2\">text</Node></Root>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
+
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 2);
+	assert_true(string_equals(xml_node_attribute_name(element, 0), "a"));
+	assert_true(string_equals(xml_node_attribute_content(element, 0), "1"));
+	assert_true(string_equals(xml_node_attribute_name(element, 1), "b"));
+	assert_true(string_equals(xml_node_attribute_content(element, 1), "2"));
+
+	xml_document_free(document, true);
+}
+
+/**
+ * Attributes from file: node with 0 attributes.
+ * xml_open_document(handle); input/test-attributes-0.xml.
+ */
+static void test_attributes_from_file_0(void **state) {
+	(void)state;
+	FILE* handle = fopen("input/test-attributes-0.xml", "rb");
 	assert_non_null(handle);
 
 	struct xml_document* document = xml_open_document(handle);
 	assert_non_null(document);
 
 	struct xml_node* root = xml_document_root(document);
-	struct xml_node* element = xml_node_child(root, 0);  /* first child has the attributes */
+	struct xml_node* element = xml_node_child(root, 0);
+
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 0);
+
+	xml_document_free(document, true);
+}
+
+/**
+ * Attributes from file: node with 1 attribute.
+ * input/test-attributes-1.xml. Fails when parser stops at first space.
+ */
+static void test_attributes_from_file_1(void **state) {
+	(void)state;
+	FILE* handle = fopen("input/test-attributes-1.xml", "rb");
+	assert_non_null(handle);
+
+	struct xml_document* document = xml_open_document(handle);
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
+
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 1);
+	assert_true(string_equals(xml_node_attribute_name(element, 0), "id"));
+	assert_true(string_equals(xml_node_attribute_content(element, 0), "one"));
+
+	xml_document_free(document, true);
+}
+
+/**
+ * Attributes from file: node with 2 attributes.
+ * input/test-attributes-2.xml. Fails when parser stops at first space.
+ *
+ * @author Isty001
+ * @see https://github.com/Isty001/
+ */
+static void test_attributes_from_file_2(void **state) {
+	(void)state;
+	FILE* handle = fopen("input/test-attributes-2.xml", "rb");
+	assert_non_null(handle);
+
+	struct xml_document* document = xml_open_document(handle);
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
 
 	assert_non_null(element);
 	assert_int_equal(xml_node_attributes(element), 2);
-
 	assert_true(string_equals(xml_node_attribute_name(element, 0), "value"));
 	assert_true(string_equals(xml_node_attribute_content(element, 0), "2"));
 	assert_true(string_equals(xml_node_attribute_name(element, 1), "value_2"));
 	assert_true(string_equals(xml_node_attribute_content(element, 1), "Hello"));
 
 	xml_document_free(document, true);
-	#undef FILE_NAME
 }
 
 
@@ -318,7 +426,12 @@ static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_1),
 	cmocka_unit_test(test_xml_parse_document_2),
 	cmocka_unit_test(test_xml_parse_document_3),
-	cmocka_unit_test(test_xml_parse_attributes),
+	cmocka_unit_test(test_attributes_in_memory_0),
+	cmocka_unit_test(test_attributes_in_memory_1),
+	cmocka_unit_test(test_attributes_in_memory_2),
+	cmocka_unit_test(test_attributes_from_file_0),
+	cmocka_unit_test(test_attributes_from_file_1),
+	cmocka_unit_test(test_attributes_from_file_2),
 	cmocka_unit_test(test_find_node_by_tag_name),
 };
 
