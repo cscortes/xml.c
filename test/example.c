@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 	 * will verbosely tell you about the parsing process
 	 */
 	if (!document) {
-		printf("Could parse document\n");
+		printf("Error: Could not parse document.\n");
 		exit(EXIT_FAILURE);
 	}
 	struct xml_node* root = xml_document_root(document);

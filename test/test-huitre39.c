@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
 	struct xml_document* document = xml_parse_document(source, strlen(source));
 
 	if (!document) {
-		printf("Could parse document\n");
+		printf("Error: Could not parse document.\n");
 		exit(EXIT_FAILURE);
 	}
 	struct xml_node* root = xml_document_root(document);
