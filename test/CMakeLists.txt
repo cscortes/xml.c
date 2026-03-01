@@ -11,10 +11,18 @@ file(COPY "${CMAKE_CURRENT_LIST_DIR}/input/test-attributes.xml"
 
 
 
-# C unit tests (single executable)
+# C unit tests (single executable: runner + modules; one report)
 add_executable(
 	"${PROJECT_NAME}-test-c"
+	"${CMAKE_CURRENT_LIST_DIR}/test_main.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-null.c"
+)
+
+target_include_directories(
+	"${PROJECT_NAME}-test-c"
+	PRIVATE
+		"${CMAKE_CURRENT_LIST_DIR}"
 )
 
 target_compile_options(

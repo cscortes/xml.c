@@ -4,6 +4,24 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.3.1] — 2025-02-28
+
+### Added
+
+- **NULL-safety in public API** — `xml_document_free`, `xml_document_root`, and all node/string accessors (`xml_node_name`, `xml_node_content`, `xml_node_children`, `xml_node_child`, `xml_node_attributes`, `xml_node_attribute_name`, `xml_node_attribute_content`, `xml_easy_child`) accept NULL and return safely (no-op or NULL/0) so callers do not crash.
+- **NULL/lifecycle unit tests** — New test module `test/unit-c-null.c` (5 tests) plus single test runner (`test/test_main.c`, `test/test_runner.h`). All 11 tests run in one executable and produce one report.
+- **Test docs** — [docs/quick_start_tests.md](docs/quick_start_tests.md): single combined report and 11-test layout; optional XML report artifact (cmocka `CMOCKA_MESSAGE_OUTPUT=xml`, `CMOCKA_XML_FILE`); tip to use `-V`/`--verbose` to see every test result regardless of failure.
+
+### Changed
+
+- **Test build** — Single C test executable `xml-test-c` built from `test_main.c` + `unit-c.c` + `unit-c-null.c`; `unit-c.c` no longer has its own `main()` (uses getter for runner). One CTest target, one Valgrind target.
+
+### Fixed
+
+- Segfaults when passing NULL to document or node APIs; all such calls now behave as documented (no crash, safe return value).
+
+---
+
 ## [0.3.0] — modernization release
 
 **Baseline:** [ooxi/xml.c release-0.2.0](https://github.com/ooxi/xml.c/releases/tag/release-0.2.0) (Dec 2017).

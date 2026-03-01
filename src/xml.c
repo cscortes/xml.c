@@ -912,6 +912,9 @@ struct xml_document* xml_open_document(FILE* source) {
  * [PUBLIC API]
  */
 void xml_document_free(struct xml_document* document, bool free_buffer) {
+	if (!document) {
+		return;
+	}
 	xml_node_free(document->root);
 
 	if (free_buffer) {
@@ -926,6 +929,9 @@ void xml_document_free(struct xml_document* document, bool free_buffer) {
  * [PUBLIC API]
  */
 struct xml_node* xml_document_root(struct xml_document* document) {
+	if (!document) {
+		return 0;
+	}
 	return document->root;
 }
 
@@ -935,6 +941,9 @@ struct xml_node* xml_document_root(struct xml_document* document) {
  * [PUBLIC API]
  */
 struct xml_string* xml_node_name(struct xml_node* node) {
+	if (!node) {
+		return 0;
+	}
 	return node->name;
 }
 
@@ -944,6 +953,9 @@ struct xml_string* xml_node_name(struct xml_node* node) {
  * [PUBLIC API]
  */
 struct xml_string* xml_node_content(struct xml_node* node) {
+	if (!node) {
+		return 0;
+	}
 	return node->content;
 }
 
@@ -955,6 +967,9 @@ struct xml_string* xml_node_content(struct xml_node* node) {
  * @warning O(n)
  */
 size_t xml_node_children(struct xml_node* node) {
+	if (!node || !node->children) {
+		return 0;
+	}
 	return get_zero_terminated_array_nodes(node->children);
 }
 
@@ -964,6 +979,9 @@ size_t xml_node_children(struct xml_node* node) {
  * [PUBLIC API]
  */
 struct xml_node* xml_node_child(struct xml_node* node, size_t child) {
+	if (!node || !node->children) {
+		return 0;
+	}
 	if (child >= xml_node_children(node)) {
 		return 0;
 	}
@@ -977,6 +995,9 @@ struct xml_node* xml_node_child(struct xml_node* node, size_t child) {
  * [PUBLIC API]
  */
 size_t xml_node_attributes(struct xml_node* node) {
+	if (!node || !node->attributes) {
+		return 0;
+	}
 	return get_zero_terminated_array_attributes(node->attributes);
 }
 
@@ -986,6 +1007,9 @@ size_t xml_node_attributes(struct xml_node* node) {
  * [PUBLIC API]
  */
 struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribute) {
+	if (!node || !node->attributes) {
+		return 0;
+	}
 	if(attribute >= xml_node_attributes(node)) {
 		return 0;
 	}
@@ -999,6 +1023,9 @@ struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribu
  * [PUBLIC API]
  */
 struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attribute) {
+	if (!node || !node->attributes) {
+		return 0;
+	}
 	if(attribute >= xml_node_attributes(node)) {
 		return 0;
 	}
@@ -1012,6 +1039,10 @@ struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attr
  * [PUBLIC API]
  */
 struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name, ...) {
+
+	if (!node) {
+		return 0;
+	}
 
 	/* Find children, one by one
 	 */

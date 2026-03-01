@@ -44,10 +44,10 @@ Test project /path/to/xml.c/build
 
 | Test | What it does |
 |------|----------------|
-| **xml-test-c** | Single C executable that runs 6 cmocka unit tests: simple parse, multiple tags, path lookup (`xml_easy_child`), file-based parse, attributes, and find-by-tag-name. |
+| **xml-test-c** | Single C executable that runs all cmocka unit tests in one go (parsing, file-based, attributes, NULL/lifecycle). It is built from a runner (`test/test_main.c`) plus test modules (`test/unit-c.c`, `test/unit-c-null.c`) and produces **one comprehensive report** for the whole suite. |
 | **xml-test-c-valgrind** | Same C tests run under [Valgrind](https://valgrind.org/) (memcheck, full leak check). Added only if Valgrind is installed; fails if Valgrind reports memory errors or leaks. |
 
-The C test executable is built from `test/unit-c.c` and uses test input files from `test/input/` (copied into the build tree). Tests run with their working directory set to the build directory so they can find `input/test.xml` and `input/test-attributes.xml`.
+The C test executable uses test input files from `test/input/` (copied into the build tree). Tests run with their working directory set to the build directory so they can find `input/test.xml` and `input/test-attributes.xml`.
 
 ---
 
@@ -59,16 +59,44 @@ To see each cmocka test name and result:
 ctest --test-dir build --output-on-failure -V
 ```
 
+**Tip:** Use `-V` or `--verbose` if you want to see every test and its result (e.g. `[ RUN ]` / `[ OK ]`) regardless of whether any test fails; without it, CTest only shows full output when there is a failure.
+
 Example output:
 
 ```
-[==========] tests: Running 6 test(s).
+[==========] all: Running 11 test(s).
 [ RUN      ] test_xml_parse_document_0
 [       OK ] test_xml_parse_document_0
 [ RUN      ] test_xml_parse_document_1
 ...
-[  PASSED  ] 6 test(s).
+[  PASSED  ] 11 test(s).
 ```
+
+---
+
+## Produce a test report artifact
+
+cmocka can write a **XML report** to a file so you get a persistent artifact (e.g. for CI or tooling). Run the test executable with two environment variables:
+
+- **`CMOCKA_MESSAGE_OUTPUT=xml`** — use XML format (JUnit-style).
+- **`CMOCKA_XML_FILE=<path>`** — write the report to this file (e.g. `build/test-results.xml`).
+
+Example (from project root):
+
+```bash
+cd build/test
+CMOCKA_MESSAGE_OUTPUT=xml CMOCKA_XML_FILE=test-results.xml ./xml-test-c
+```
+
+The file `build/test/test-results.xml` is created (or under whatever path you set). If the file cannot be created, cmocka falls back to stderr. With the single test runner, all tests appear in one XML report.
+
+From the project root in one line:
+
+```bash
+(cd build/test && CMOCKA_MESSAGE_OUTPUT=xml CMOCKA_XML_FILE=test-results.xml ./xml-test-c); echo "Exit: $?"
+```
+
+CTest does not set these variables by default. To always produce an artifact when running CTest, you can set the test command to run the executable with the env vars, or run the binary directly as above after `ctest`.
 
 ---
 

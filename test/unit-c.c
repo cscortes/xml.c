@@ -27,12 +27,16 @@
 #include <string.h>
 #include <cmocka.h>
 #include <xml.h>
+#include "test_runner.h"
 
 
 /**
  * @return true iff xml string equals the C string
  */
 static bool string_equals(struct xml_string* a, char const* b) {
+	if (!a) {
+		return b == NULL || b[0] == '\0';
+	}
 	size_t a_length = xml_string_length(a);
 	size_t b_length = strlen(b);
 
@@ -309,14 +313,16 @@ static void test_find_node_by_tag_name(void **state) {
 }
 
 
-int main(void) {
-	const struct CMUnitTest tests[] = {
-		cmocka_unit_test(test_xml_parse_document_0),
-		cmocka_unit_test(test_xml_parse_document_1),
-		cmocka_unit_test(test_xml_parse_document_2),
-		cmocka_unit_test(test_xml_parse_document_3),
-		cmocka_unit_test(test_xml_parse_attributes),
-		cmocka_unit_test(test_find_node_by_tag_name),
-	};
-	return cmocka_run_group_tests(tests, NULL, NULL);
+static const struct CMUnitTest tests[] = {
+	cmocka_unit_test(test_xml_parse_document_0),
+	cmocka_unit_test(test_xml_parse_document_1),
+	cmocka_unit_test(test_xml_parse_document_2),
+	cmocka_unit_test(test_xml_parse_document_3),
+	cmocka_unit_test(test_xml_parse_attributes),
+	cmocka_unit_test(test_find_node_by_tag_name),
+};
+
+void get_unit_c_tests(const struct CMUnitTest** out_tests, size_t* out_count) {
+	*out_tests = tests;
+	*out_count = sizeof(tests) / sizeof(tests[0]);
 }
