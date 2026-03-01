@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.6.3] — 2026-03-01
+
+### Fixed
+
+- **#31 Check missing headers** — Documented that the library header [src/xml.h](src/xml.h) is self-contained (includes stdbool.h, stdint.h, stdio.h, string.h). Example now explicitly includes `<string.h>`; README Usage describes required includes and adds `<string.h>` to the code sample. [docs/issues.md](docs/issues.md) and README "Fixes in this project" updated.
+
+---
+
 ## [0.6.2] — 2026-03-01
 
 ### Fixed

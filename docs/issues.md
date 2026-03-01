@@ -1,0 +1,26 @@
+Fixes and features tracked from [ooxi/xml.c](https://github.com/ooxi/xml.c) issues. Already-fixed items are listed in README under **Fixes in this project**; candidates and current features are below.
+
+---
+
+## Fixes (from upstream issues)
+
+| Status | Upstream # | Title | Note |
+|--------|------------|--------|------|
+| **Already fixed** | #24 | unsigned expression &lt; 0 is always false | Fixed in this fork (0.6.1). |
+| **Already fixed** | #26 | Parsing error with xml header and empty element | Closed upstream; this fork handles empty/self-closing elements and related parse paths. |
+| **Already fixed** | #39 (part) | Does not handle new lines in tags | This fork parses full opening tags up to `'>'`, so multiline tags (e.g. SVG) work. |
+| **Already fixed** | #18 | Possible memory leak | Closed upstream; this fork has realloc handling and safe `xml_document_free`. |
+| **Candidate** | #33 | Does not handle attributes with spaces in the content | Use quote-aware tokenization in attribute parsing. |
+| **Candidate** | #38 | parse error (Tiled/SVG-style XML) | Resolved by fixing #33 (and any remaining newline handling). |
+| **Already fixed** | #31 | Check missing headers | Documented: [src/xml.h](src/xml.h) states it is self-contained (stdbool, stdint, stdio, string); example and README include string.h and describe required headers. |
+
+## Features (from upstream issues)
+
+| Status | Upstream # | Title | Note |
+|--------|------------|--------|------|
+| **Current (beyond original)** | — | Opening tags with attributes; full open-tag parsing | This fork parses elements with attributes and multiline opening tags (original did not). |
+| **Current (beyond original)** | — | API and robustness | e.g. `xml_document_buffer_length`, NULL-safe API, `xml_open_document`/parser fixes, tests, docs. |
+| **Candidate** | #21 | XML comments `<!-- ... -->` | Skip comments in the parser. |
+| **Candidate** | #30 | Processing instructions `<?...?>` | Skip `<?xml ...?>` and other PIs. |
+| **Candidate** | #40 | CDATA sections `<![CDATA[...]]>` | Parse and expose CDATA content. |
+| **Candidate** | #25 | Easier text printing / helpers | e.g. zero-terminated copy or compare helpers for node/attribute text. |

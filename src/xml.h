@@ -26,6 +26,10 @@
 
 /**
  * Includes
+ *
+ * This header is self-contained: it includes <stdbool.h>, <stdint.h>, <stdio.h>,
+ * and <string.h>. You need only #include <xml.h> to use the API (uint8_t, size_t,
+ * bool, FILE, and the declared functions).
  */
 #include <stdbool.h>
 #include <stdint.h>

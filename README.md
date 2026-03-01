@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.6.2 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.6.3 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -15,6 +15,31 @@
 ## Credits
 
 xml.c was originally written by [ooxi/xml.c](https://github.com/ooxi/xml.c). This fork continues development as a **modernization project**: we add features, tests, docs, and bug fixes while keeping the library small and embeddable. **To use or contribute to the modernized codebase, clone or link to this repository** ([cscortes/xml.c](https://github.com/cscortes/xml.c)).
+
+
+## Fixes in this project
+
+Issues from the [original ooxi/xml.c](https://github.com/ooxi/xml.c) repository that are fixed in this fork:
+
+- **#24** — Compiler warning: comparison of unsigned expression with `< 0` in `xml_parser_error` (fixed; type-limits clean).
+- **#26** — Parsing errors with XML declaration and empty/self-closing elements (handled; empty-element tags and related parse paths work).
+- **#18** — Possible memory leak (closed upstream; this fork additionally fixes realloc handling and `xml_document_free(NULL)` safety).
+- **#31** — Check missing headers: the library header is documented as self-contained; the example and README list required includes (e.g. `stdint.h` via `<xml.h>`, `string.h` for `strlen`).
+- **#39 (part)** — Tags split across multiple lines (e.g. SVG): opening tags are now parsed in full up to `'>'`, so multiline start tags parse correctly.
+
+For the full list of fixes and remaining candidates, see [docs/issues.md](docs/issues.md).
+
+
+## Features
+
+**Current behavior (beyond the original project):**
+
+- **Stricter file and parser logic** — `xml_open_document` uses a correct read loop (no feof off-by-one), checks `ferror`/`fclose`, and the parser clamps past-end position consistently with documented behavior.
+- **Elements with attributes** — Elements like `<Node attr="value">` parse correctly; the parser reads the full opening tag (including attributes) before expecting `'>'`.
+- **Multiline opening tags** — Start tags that span multiple lines (e.g. in SVG or Tiled XML) are supported.
+- **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
+
+**Planned or candidate features (from upstream issue requests):** XML comments, processing instructions, CDATA, attribute values with spaces, and text helpers. See [docs/issues.md](docs/issues.md) for details.
 
 
 ## Goals (this sprint)
@@ -113,7 +138,9 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 ## Usage
 
 This example is also included in the repository ([example/example.c](example/example.c))
-and will be built by default. Most of the code is C boilerplate, the important
+and will be built by default. The library header `<xml.h>` is self-contained (it
+includes the standard headers it needs). The example below also uses `<stdio.h>`,
+`<stdlib.h>`, and `<string.h>`. Most of the code is C boilerplate; the important
 functions are `xml_parse_document`, `xml_document_root`, `xml_node_name`,
 `xml_node_content` and `xml_node_child` / `xml_node_children`.
 
@@ -121,6 +148,7 @@ functions are `xml_parse_document`, `xml_document_root`, `xml_node_name`,
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <xml.h>
 
 
