@@ -50,4 +50,12 @@ void get_unit_c_null_tests(const struct CMUnitTest** out_tests, size_t* out_coun
  */
 void get_unit_c_pi_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
+/**
+ * Get the CDATA section test array from unit-c-cdata.c.
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_cdata_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
 #endif

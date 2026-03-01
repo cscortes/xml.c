@@ -41,8 +41,9 @@ For the full list of fixes and remaining candidates, see [docs/issues.md](docs/i
 - **Multiline opening tags** — Start tags that span multiple lines (e.g. in SVG or Tiled XML) are supported.
 - **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
 - **XML comments** — `<!-- ... -->` are skipped by the parser (before tags and between nodes); see [docs/issues.md](docs/issues.md) #21.
+- **CDATA sections** — `<![CDATA[...]]>` are parsed and exposed as character data (no markup or entity interpretation inside); see [docs/issues.md](docs/issues.md) #40.
 
-**Planned or candidate features (from upstream issue requests):** CDATA and text helpers. See [docs/issues.md](docs/issues.md) for details.
+**Planned or candidate features (from upstream issue requests):** Text helpers. See [docs/issues.md](docs/issues.md) for details.
 
 
 ## Goals (this sprint)
@@ -127,7 +128,7 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 | Text content | Allowed | **Yes** |
 | Character references `&#N;` / `&#xN;` | Required to be expanded | **No** — not supported |
 | Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **No** — raw `&` accepted (invalid per XML) |
-| CDATA sections `<![CDATA[...]]>` | Allowed | **No** — not supported |
+| CDATA sections `<![CDATA[...]]>` | Allowed | **Yes** — parsed and exposed as character data |
 | **Other** | | |
 | Comments `<!-- ... -->` | Allowed | **No** — not recognized; may misparse |
 | Processing instructions `<?...?>` | Allowed | **Yes** — skipped (including `<?xml ...?>`) |

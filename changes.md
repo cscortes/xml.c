@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.9.0] — 2026-03-01
+
+### Added
+
+- **CDATA sections (#40)** — Parser recognizes `<![CDATA[...]]>` and exposes content as character data (no markup or entity interpretation inside CDATA). Supports empty CDATA, CDATA in child elements, mixed text and CDATA, adjacent CDATA sections, and newlines; unclosed CDATA yields parse failure. New test module [test/unit-c-cdata.c](test/unit-c-cdata.c) with nine tests. [docs/issues.md](docs/issues.md), README, and [docs/test_spec.md](docs/test_spec.md) updated.
+
+---
+
 ## [0.8.0] — 2026-03-01
 
 ### Added

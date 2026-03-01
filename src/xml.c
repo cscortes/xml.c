@@ -85,11 +85,13 @@ static char* xml_strtok_r(char *str, const char *delim, char **nextp) {
 /**
  * [OPAQUE API]
  *
- * UTF-8 text
+ * UTF-8 text. When buffer_owned is true, buffer was allocated and must be
+ * freed with the string; otherwise it points into the document buffer.
  */
 struct xml_string {
 	uint8_t const* buffer;
 	size_t length;
+	bool buffer_owned;
 };
 
 /**
@@ -228,12 +230,14 @@ static uint8_t* xml_string_clone(struct xml_string* s) {
 /**
  * [PRIVATE]
  *
- * Frees the resources allocated by the string
- *
- * @warning `buffer` must _not_ be freed, since it is a reference to the
- *     document's buffer
+ * Frees the resources allocated by the string. When buffer_owned is true,
+ * also frees the buffer (used for concatenated content e.g. CDATA).
  */
 static void xml_string_free(struct xml_string* string) {
+	if (!string)
+		return;
+	if (string->buffer_owned && string->buffer)
+		free((void*)string->buffer);
 	free(string);
 }
 
@@ -478,6 +482,47 @@ static bool xml_skip_processing_instruction(struct xml_parser* parser) {
 
 /**
  * [PRIVATE]
+ * Parses an XML CDATA section \c <![CDATA[...]]> if the parser is positioned at
+ * \c <![CDATA[. (docs/issues.md #40)
+ *
+ * @return New xml_string with CDATA content (pointer into document buffer), or
+ *     NULL if not at CDATA start or section is unclosed
+ */
+static struct xml_string* xml_parse_cdata_section(struct xml_parser* parser) {
+	xml_parser_info(parser, "cdata");
+	if (parser->position + 9 > parser->length)
+		return NULL;
+	if (parser->buffer[parser->position] != '<'
+	    || parser->buffer[parser->position + 1] != '!'
+	    || parser->buffer[parser->position + 2] != '['
+	    || memcmp((char const*)&parser->buffer[parser->position + 3], "CDATA[", 6) != 0)
+		return NULL;
+	parser->position += 9;
+	size_t start = parser->position;
+	/* Find "]]>" */
+	while (parser->position + 3 <= parser->length) {
+		if (parser->buffer[parser->position] == ']'
+		    && parser->buffer[parser->position + 1] == ']'
+		    && parser->buffer[parser->position + 2] == '>') {
+			size_t content_len = parser->position - start;
+			parser->position += 3;
+			struct xml_string* s = malloc(sizeof(struct xml_string));
+			if (!s)
+				return NULL;
+			s->buffer = &parser->buffer[start];
+			s->length = content_len;
+			s->buffer_owned = false;
+			return s;
+		}
+		parser->position++;
+	}
+	xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_cdata_section::CDATA not closed (missing ]]> )");
+	return NULL;
+}
+
+
+/**
+ * [PRIVATE]
  * Skip past any characters in delim (whitespace), return pointer to first non-delim or to end.
  */
 static char* skip_delim(char* p, const char* delim) {
@@ -590,8 +635,10 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 		}
 		new_attribute->name->buffer = (unsigned char*)start_name;
 		new_attribute->name->length = name_len;
+		new_attribute->name->buffer_owned = false;
 		new_attribute->content->buffer = (unsigned char*)start_content;
 		new_attribute->content->length = content_len;
+		new_attribute->content->buffer_owned = false;
 
 		old_elements = get_zero_terminated_array_attributes(attributes);
 		new_elements = old_elements + 1;
@@ -668,6 +715,7 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 	struct xml_string* name = malloc(sizeof(struct xml_string));
 	name->buffer = &parser->buffer[start];
 	name->length = length;
+	name->buffer_owned = false;
 	return name;
 }
 
@@ -700,6 +748,7 @@ static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) 
 	struct xml_string* content = malloc(sizeof(struct xml_string));
 	content->buffer = &parser->buffer[start];
 	content->length = (parser->position - 1) - start;
+	content->buffer_owned = false;
 	return content;
 }
 
@@ -782,7 +831,7 @@ static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
  *       tag {} content
  * \endcode
  *
- * @warning CDATA etc. is _not_ and will never be supported
+ * CDATA sections are handled in the caller (xml_parse_node). (docs/issues.md #40)
  */
 static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	xml_parser_info(parser, "content");
@@ -825,7 +874,50 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	struct xml_string* content = malloc(sizeof(struct xml_string));
 	content->buffer = &parser->buffer[start];
 	content->length = length;
+	content->buffer_owned = false;
 	return content;
+}
+
+
+/**
+ * [PRIVATE]
+ *
+ * Appends a segment to node content (for mixed content and CDATA). If existing
+ * is NULL and seg_len is 0, returns NULL. If existing is NULL, returns a new
+ * xml_string pointing at seg_buf (not owned). Otherwise concatenates and may
+ * allocate (buffer_owned set when concatenating). (docs/issues.md #40)
+ */
+static struct xml_string* content_append(struct xml_parser* parser,
+	struct xml_string* existing, uint8_t const* seg_buf, size_t seg_len) {
+	(void)parser;
+	if (!seg_buf && seg_len == 0)
+		return existing;
+	if (!existing) {
+		struct xml_string* s = malloc(sizeof(struct xml_string));
+		if (!s)
+			return NULL;
+		s->buffer = seg_buf;
+		s->length = seg_len;
+		s->buffer_owned = false;
+		return s;
+	}
+	/* Concatenate: allocate new buffer, copy both, return new string (owned). */
+	size_t total = existing->length + seg_len;
+	uint8_t* copy = malloc(total);
+	if (!copy)
+		return existing;
+	memcpy(copy, existing->buffer, existing->length);
+	memcpy(copy + existing->length, seg_buf, seg_len);
+	xml_string_free(existing);
+	struct xml_string* s = malloc(sizeof(struct xml_string));
+	if (!s) {
+		free(copy);
+		return NULL;
+	}
+	s->buffer = copy;
+	s->length = total;
+	s->buffer_owned = true;
+	return s;
 }
 
 
@@ -886,42 +978,47 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 		goto node_creation;
 	}
 
-	/* If the content does not start with '<', a text content is assumed
+	/* Parse content and/or children: text, CDATA, and child elements (docs/issues.md #40)
 	 */
-	if ('<' != xml_parser_peek(parser, CURRENT_CHARACTER)) {
-		content = xml_parse_content(parser);
-
-		if (!content) {
-			xml_parser_error(parser, 0, "xml_parse_node::content");
-			goto exit_failure;
-		}
-
-
-	/* Otherwise children are to be expected
-	 */
-	} else for (;;) {
+	for (;;) {
 		xml_skip_whitespace(parser);
 		while (xml_skip_comment(parser) || xml_skip_processing_instruction(parser))
 			xml_skip_whitespace(parser);
 		if (parser->position >= parser->length)
 			break;
-		if ('<' == xml_parser_peek(parser, CURRENT_CHARACTER)
-		    && '/' == xml_parser_peek(parser, NEXT_CHARACTER))
+		/* Closing tag */
+		if (parser->buffer[parser->position] == '<'
+		    && parser->position + 1 < parser->length
+		    && parser->buffer[parser->position + 1] == '/')
 			break;
-
-		/* Parse child node
-		 */
-		struct xml_node* child = xml_parse_node(parser);
-		if (!child) {
-			xml_parser_error(parser, NEXT_CHARACTER, "xml_parse_node::child");
-			goto exit_failure;
+		/* CDATA section */
+		if (parser->position + 9 <= parser->length
+		    && memcmp((char const*)&parser->buffer[parser->position], "<![CDATA[", 9) == 0) {
+			struct xml_string* cdata = xml_parse_cdata_section(parser);
+			if (!cdata) {
+				xml_parser_error(parser, 0, "xml_parse_node::cdata");
+				goto exit_failure;
+			}
+			{
+				size_t cdata_len = cdata->length;
+				content = content_append(parser, content, cdata->buffer, cdata_len);
+				xml_string_free(cdata);
+				if (!content && cdata_len > 0) {
+					xml_parser_error(parser, 0, "xml_parse_node::content_append");
+					goto exit_failure;
+				}
+			}
+			continue;
 		}
-
-		/* Grow child array :)
-		 */
-		size_t old_elements = get_zero_terminated_array_nodes(children);
-		size_t new_elements = old_elements + 1;
-		{
+		/* Child element (starts with '<' and a name character) */
+		if (parser->buffer[parser->position] == '<') {
+			struct xml_node* child = xml_parse_node(parser);
+			if (!child) {
+				xml_parser_error(parser, NEXT_CHARACTER, "xml_parse_node::child");
+				goto exit_failure;
+			}
+			size_t old_elements = get_zero_terminated_array_nodes(children);
+			size_t new_elements = old_elements + 1;
 			struct xml_node** new_children = realloc(children, (new_elements + 1) * sizeof(struct xml_node*));
 			if (!new_children) {
 				xml_node_free(child);
@@ -929,12 +1026,27 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 				goto exit_failure;
 			}
 			children = new_children;
+			children[new_elements - 1] = child;
+			children[new_elements] = 0;
+			continue;
 		}
-
-		/* Save child
-		 */
-		children[new_elements - 1] = child;
-		children[new_elements] = 0;
+		/* Text content (does not start with '<') */
+		{
+			struct xml_string* text = xml_parse_content(parser);
+			if (!text) {
+				xml_parser_error(parser, 0, "xml_parse_node::content");
+				goto exit_failure;
+			}
+			{
+				size_t text_len = text->length;
+				content = content_append(parser, content, text->buffer, text_len);
+				xml_string_free(text);
+				if (!content && text_len > 0) {
+					xml_parser_error(parser, 0, "xml_parse_node::content_append");
+					goto exit_failure;
+				}
+			}
+		}
 	}
 
 

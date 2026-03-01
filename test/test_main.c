@@ -30,13 +30,15 @@ int main(void) {
 	const struct CMUnitTest* t1;
 	const struct CMUnitTest* t2;
 	const struct CMUnitTest* t3;
-	size_t n1, n2, n3;
+	const struct CMUnitTest* t4;
+	size_t n1, n2, n3, n4;
 
 	get_unit_c_tests(&t1, &n1);
 	get_unit_c_null_tests(&t2, &n2);
 	get_unit_c_pi_tests(&t3, &n3);
+	get_unit_c_cdata_tests(&t4, &n4);
 
-	size_t total = n1 + n2 + n3;
+	size_t total = n1 + n2 + n3 + n4;
 	struct CMUnitTest* all = malloc(total * sizeof(struct CMUnitTest));
 	if (!all) {
 		return 1;
@@ -44,6 +46,7 @@ int main(void) {
 	memcpy(all, t1, n1 * sizeof(struct CMUnitTest));
 	memcpy(all + n1, t2, n2 * sizeof(struct CMUnitTest));
 	memcpy(all + n1 + n2, t3, n3 * sizeof(struct CMUnitTest));
+	memcpy(all + n1 + n2 + n3, t4, n4 * sizeof(struct CMUnitTest));
 
 	/* Use internal API with explicit count; the macro uses sizeof(array) which is wrong for a pointer. */
 	int ret = _cmocka_run_group_tests("all", all, total, NULL, NULL);

@@ -22,5 +22,5 @@ Fixes and features tracked from [ooxi/xml.c](https://github.com/ooxi/xml.c) issu
 | **Current (beyond original)** | — | API and robustness | e.g. `xml_document_buffer_length`, NULL-safe API, `xml_open_document`/parser fixes, tests, docs. |
 | **Current (beyond original)** | #21 | XML comments `<!-- ... -->` | Parser skips comments before open/close tags and between nodes. |
 | **Current (beyond original)** | #30 | Processing instructions `<?...?>` | Parser skips `<?xml ...?>` and other PIs before tags and between nodes. |
-| **Candidate** | #40 | CDATA sections `<![CDATA[...]]>` | Parse and expose CDATA content. |
+| **Current (beyond original)** | #40 | CDATA sections `<![CDATA[...]]>` | Parser recognizes `<![CDATA[...]]>` and exposes content as character data (no markup/entity interpretation). |
 | **Candidate** | #25 | Easier text printing / helpers | e.g. zero-terminated copy or compare helpers for node/attribute text. |
