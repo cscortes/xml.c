@@ -114,7 +114,7 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 | Feature | XML 1.0 | xml.c |
 |---------|---------|-------|
 | **Document** | | |
-| XML declaration `<?xml ...?>` | Optional | **No** — not recognized; may misparse or fail |
+| XML declaration `<?xml ...?>` | Optional | **Skipped** — treated as PI; not interpreted |
 | Single root element | Required | **Yes** — one root element only |
 | **Elements** | | |
 | Tag names (Name production) | Letter / `_` / `:` start; then Name chars | **No** — any chars until `>` or space (e.g. accepts `<2tag>`) |
@@ -130,7 +130,7 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 | Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **No** — raw `&` accepted (invalid per XML) |
 | CDATA sections `<![CDATA[...]]>` | Allowed | **Yes** — parsed and exposed as character data |
 | **Other** | | |
-| Comments `<!-- ... -->` | Allowed | **No** — not recognized; may misparse |
+| Comments `<!-- ... -->` | Allowed | **Yes** — skipped before tags and between nodes |
 | Processing instructions `<?...?>` | Allowed | **Yes** — skipped (including `<?xml ...?>`) |
 | DTD / DOCTYPE | Optional | **No** — not supported |
 | Namespaces | Common practice (Namespaces in XML) | **No** — no namespace handling |
