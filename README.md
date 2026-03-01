@@ -27,6 +27,7 @@ Issues from the [original ooxi/xml.c](https://github.com/ooxi/xml.c) repository 
 - **#31** — Check missing headers: the library header is documented as self-contained; the example and README list required includes (e.g. `stdint.h` via `<xml.h>`, `string.h` for `strlen`).
 - **#39 (part)** — Tags split across multiple lines (e.g. SVG): opening tags are now parsed in full up to `'>'`, so multiline start tags parse correctly.
 - **#33** — Attribute values with spaces: the parser now uses quote-aware parsing so values like `title="Hello World"` are correct (XML-compliant).
+- **#38** — Parse error on Tiled/SVG-style XML: resolved by full open-tag parsing (multiline), quote-aware attributes (#33), and newline in attribute delimiters.
 
 For the full list of fixes and remaining candidates, see [docs/issues.md](docs/issues.md).
 
