@@ -42,7 +42,7 @@ For the full list of fixes and remaining candidates, see [docs/issues.md](docs/i
 - **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
 - **XML comments** — `<!-- ... -->` are skipped by the parser (before tags and between nodes); see [docs/issues.md](docs/issues.md) #21.
 
-**Planned or candidate features (from upstream issue requests):** Processing instructions, CDATA, and text helpers. See [docs/issues.md](docs/issues.md) for details.
+**Planned or candidate features (from upstream issue requests):** CDATA and text helpers. See [docs/issues.md](docs/issues.md) for details.
 
 
 ## Goals (this sprint)
@@ -130,7 +130,7 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 | CDATA sections `<![CDATA[...]]>` | Allowed | **No** — not supported |
 | **Other** | | |
 | Comments `<!-- ... -->` | Allowed | **No** — not recognized; may misparse |
-| Processing instructions `<?...?>` | Allowed | **No** — not recognized |
+| Processing instructions `<?...?>` | Allowed | **Yes** — skipped (including `<?xml ...?>`) |
 | DTD / DOCTYPE | Optional | **No** — not supported |
 | Namespaces | Common practice (Namespaces in XML) | **No** — no namespace handling |
 | Encoding declaration / conversion | Declared and applied | **No** — no conversion; input treated as raw bytes |

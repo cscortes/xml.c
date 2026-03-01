@@ -4,6 +4,18 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.8.0] — 2026-03-01
+
+### Added
+
+- **Processing instructions (#30)** — Parser skips `<?...?>` PIs (including `<?xml ...?>`) before open/close tags and between nodes. [docs/issues.md](docs/issues.md) and README compliance table updated. New test module [test/unit-c-pi.c](test/unit-c-pi.c) with seven tests: XML decl before root, other PI before root, multiple PIs, PI between children, PI and comment mix, minimal PI, multiline PI.
+
+### Changed
+
+- **Test report cleanliness** — Expected parser error output is suppressed in two more tests: `test_open_document_empty_file` and `test_parse_exact_length_boundary` redirect stderr to `/dev/null` during the failing parse so messages like "length equals zero" and "expected <" do not appear in the test report (same pattern as existing error-path tests).
+
+---
+
 ## [0.7.0] — 2026-03-01
 
 ### Added

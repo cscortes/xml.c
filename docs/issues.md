@@ -21,6 +21,6 @@ Fixes and features tracked from [ooxi/xml.c](https://github.com/ooxi/xml.c) issu
 | **Current (beyond original)** | — | Opening tags with attributes; full open-tag parsing | This fork parses elements with attributes and multiline opening tags (original did not). |
 | **Current (beyond original)** | — | API and robustness | e.g. `xml_document_buffer_length`, NULL-safe API, `xml_open_document`/parser fixes, tests, docs. |
 | **Current (beyond original)** | #21 | XML comments `<!-- ... -->` | Parser skips comments before open/close tags and between nodes. |
-| **Candidate** | #30 | Processing instructions `<?...?>` | Skip `<?xml ...?>` and other PIs. |
+| **Current (beyond original)** | #30 | Processing instructions `<?...?>` | Parser skips `<?xml ...?>` and other PIs before tags and between nodes. |
 | **Candidate** | #40 | CDATA sections `<![CDATA[...]]>` | Parse and expose CDATA content. |
 | **Candidate** | #25 | Easier text printing / helpers | e.g. zero-terminated copy or compare helpers for node/attribute text. |

@@ -295,6 +295,8 @@ static void test_open_document_exact_buffer(void **state) {
 /**
  * xml_open_document on an empty file must return NULL (no read past end, no crash).
  * Exercises the fread loop when first read returns 0 and ferror/fclose paths.
+ * stderr is redirected during the call so expected xml_parser_error output
+ * (e.g. "length equals zero") does not appear in the test report.
  */
 static void test_open_document_empty_file(void **state) {
 	(void)state;
@@ -304,8 +306,22 @@ static void test_open_document_empty_file(void **state) {
 	 */
 	rewind(f);
 
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
 	struct xml_document* document = xml_open_document(f);
 	assert_null(document);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
 	/* f was closed by xml_open_document
 	 */
 }
@@ -317,6 +333,8 @@ static void test_open_document_empty_file(void **state) {
  * length 3. With the consume-at-end fix (position = length, no clamp to length-1),
  * code that checks position < length before reading stays in bounds; Valgrind/ASan
  * would catch any overread.
+ * stderr is redirected during the failing parse so expected xml_parser_error output
+ * does not appear in the test report.
  */
 static void test_parse_exact_length_boundary(void **state) {
 	(void)state;
@@ -333,7 +351,23 @@ static void test_parse_exact_length_boundary(void **state) {
 
 	SOURCE(src_bad, "<r>");
 	size_t len_bad = strlen((char const*)src_bad);
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
 	struct xml_document* doc_fail = xml_parse_document(src_bad, len_bad);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+
 	assert_null(doc_fail);
 	free(src_bad);
 }

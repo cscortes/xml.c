@@ -450,6 +450,34 @@ static bool xml_skip_comment(struct xml_parser* parser) {
 
 /**
  * [PRIVATE]
+ * Skips an XML processing instruction \c <? ... ?> if the parser is positioned at \c <?.
+ * Includes the XML declaration \c <?xml ...?> (docs/issues.md #30).
+ *
+ * @return true if a PI was skipped, false if not at \c <? or on error
+ */
+static bool xml_skip_processing_instruction(struct xml_parser* parser) {
+	xml_parser_info(parser, "processing_instruction");
+	if (parser->position + 2 > parser->length)
+		return false;
+	if (parser->buffer[parser->position] != '<'
+	    || parser->buffer[parser->position + 1] != '?')
+		return false;
+	parser->position += 2;
+	while (parser->position + 2 <= parser->length) {
+		if (parser->buffer[parser->position] == '?'
+		    && parser->buffer[parser->position + 1] == '>') {
+			parser->position += 2;
+			return true;
+		}
+		parser->position++;
+	}
+	xml_parser_error(parser, CURRENT_CHARACTER, "xml_skip_processing_instruction::PI not closed (missing ?>)");
+	return false;
+}
+
+
+/**
+ * [PRIVATE]
  * Skip past any characters in delim (whitespace), return pointer to first non-delim or to end.
  */
 static char* skip_delim(char* p, const char* delim) {
@@ -689,7 +717,7 @@ static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) 
 static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_open");
 	xml_skip_whitespace(parser);
-	while (xml_skip_comment(parser))
+	while (xml_skip_comment(parser) || xml_skip_processing_instruction(parser))
 		xml_skip_whitespace(parser);
 
 	/* Consume `<'
@@ -718,7 +746,7 @@ static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_close");
 	xml_skip_whitespace(parser);
-	while (xml_skip_comment(parser))
+	while (xml_skip_comment(parser) || xml_skip_processing_instruction(parser))
 		xml_skip_whitespace(parser);
 
 	/* Consume `</'
@@ -873,7 +901,7 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	 */
 	} else for (;;) {
 		xml_skip_whitespace(parser);
-		while (xml_skip_comment(parser))
+		while (xml_skip_comment(parser) || xml_skip_processing_instruction(parser))
 			xml_skip_whitespace(parser);
 		if (parser->position >= parser->length)
 			break;
