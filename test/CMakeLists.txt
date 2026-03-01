@@ -1,48 +1,20 @@
 # xml.c / test
-cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR) 
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 
 
 
-# Example
-add_executable(
-	"${PROJECT_NAME}-example"
-	"${CMAKE_CURRENT_LIST_DIR}/example.c"
-)
-
-target_compile_options(
-	"${PROJECT_NAME}-example"
-	PRIVATE
-		-std=c11
-)
-
-target_link_libraries(
-	"${PROJECT_NAME}-example"
-	PRIVATE
-		xml
-)
-
-add_test(
-	NAME "${PROJECT_NAME}-example"
-	COMMAND "${PROJECT_NAME}-example"
-)
+# Test input files (tests run from build dir with input/ subdir)
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/input/test.xml"
+	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/input/test-attributes.xml"
+	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/input")
 
 
 
-# Test cases
-FILE(	COPY "${CMAKE_CURRENT_LIST_DIR}/test.xml"
-	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
-)
-
-FILE(	COPY "${CMAKE_CURRENT_LIST_DIR}/test-attributes.xml"
-	DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
-)
-
-
-
-# Test (C)
+# C unit tests (single executable)
 add_executable(
 	"${PROJECT_NAME}-test-c"
-	"${CMAKE_CURRENT_LIST_DIR}/test-xml-c.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c.c"
 )
 
 target_compile_options(
@@ -55,74 +27,21 @@ target_link_libraries(
 	"${PROJECT_NAME}-test-c"
 	PRIVATE
 		xml
+		cmocka
 )
-
 
 add_test(
 	NAME "${PROJECT_NAME}-test-c"
 	COMMAND "${PROJECT_NAME}-test-c"
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-add_test(
-	NAME "${PROJECT_NAME}-test-c-valgrind"
-	COMMAND valgrind --tool=memcheck --leak-check=full --track-origins=yes -v "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-test-c"
-)
-
-
-
-# Test (C++)
-add_executable(
-	"${PROJECT_NAME}-test-cpp"
-	"${CMAKE_CURRENT_LIST_DIR}/test-xml-cpp.cpp"
-)
-
-target_compile_options(
-	"${PROJECT_NAME}-test-cpp"
-	PRIVATE
-		-std=c++11
-)
-
-target_link_libraries(
-	"${PROJECT_NAME}-test-cpp"
-	PRIVATE
-		xml
-)
-
-
-add_test(
-	NAME "${PROJECT_NAME}-test-cpp"
-	COMMAND "${PROJECT_NAME}-test-cpp"
-)
-
-
-add_test(
-	NAME "${PROJECT_NAME}-test-cpp-valgrind"
-	COMMAND valgrind --tool=memcheck --leak-check=full --track-origins=yes -v "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-test-cpp"
-)
-
-
-
-# Test huitre39
-add_executable(
-	"${PROJECT_NAME}-test-huitre39"
-	"${CMAKE_CURRENT_LIST_DIR}/test-huitre39.c"
-)
-
-target_compile_options(
-	"${PROJECT_NAME}-test-huitre39"
-	PRIVATE
-		-std=c11
-)
-
-target_link_libraries(
-	"${PROJECT_NAME}-test-huitre39"
-	PRIVATE
-		xml
-)
-
-
-add_test(
-	NAME "${PROJECT_NAME}-test-huitre39"
-	COMMAND "${PROJECT_NAME}-test-huitre39"
-)
-
+# Valgrind memory-check test (optional; added only if valgrind is installed)
+find_program(VALGRIND_EXECUTABLE NAMES valgrind)
+if(VALGRIND_EXECUTABLE)
+	add_test(
+		NAME "${PROJECT_NAME}-test-c-valgrind"
+		COMMAND "${VALGRIND_EXECUTABLE}" --tool=memcheck --leak-check=full --track-origins=yes --error-exitcode=1 "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-test-c"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	)
+endif()

@@ -1,9 +1,21 @@
 # Project setup
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(xml C)
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "2")
-set(VERSION_PATCH "0") 
+set(VERSION_PATCH "0")
+
+
+# Fetch cmocka (C unit test framework) at a fixed version
+set(CMOCKA_VERSION "2.0.0")
+set(UNIT_TESTING OFF CACHE BOOL "" FORCE)
+include(FetchContent)
+FetchContent_Declare(
+	cmocka
+	URL "https://cmocka.org/files/2.0/cmocka-${CMOCKA_VERSION}.tar.xz"
+	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(cmocka)
 
 
 # Define main library target

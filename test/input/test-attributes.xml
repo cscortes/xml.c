@@ -1,7 +1,5 @@
 <Document>
-	<Prefix></Prefix>
-	<Element>
+	<Element value="2" value_2="Hello">
 		<With>Child</With>
 	</Element>
 </Document>
-

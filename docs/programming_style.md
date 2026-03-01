@@ -38,9 +38,10 @@ Guidelines for consistent, clear code in this project. The rules below are deriv
 
 ## Tests and examples
 
+- **Test framework:** C tests use [cmocka](https://cmocka.org/). Test functions have signature `void test_*(void **state)` and use cmocka assertions (`assert_true`, `assert_non_null`, `assert_null`, `assert_int_equal`, `assert_string_equal`, etc.). The suite is run via `cmocka_run_group_tests`.
 - **Test data:** Use the **`SOURCE(source, "string")`** macro (or equivalent) in tests to build a null-terminated `uint8_t*` source for the parser. Frees are done explicitly where needed (e.g. `xml_document_free(document, true)`).
-- **Assertions:** Use **`assert_that(condition, "message")`** in C tests; the message should be a short, grammatical phrase describing what was asserted (e.g. “Could not parse document”, “root node name must be `Hello'”).
-- **Test layout:** One test per function; tests are called from `main` in order. No shared global state between tests.
+- **Test layout:** One test per function; no shared global state between tests.
+- **Valgrind:** When [Valgrind](https://valgrind.org/) is installed, CMake adds an optional **xml-test-c-valgrind** test that runs the C tests under memcheck. See [quick_start_tests.md](quick_start_tests.md) for how to install and run it.
 
 ## Build and includes
 

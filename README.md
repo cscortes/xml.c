@@ -29,14 +29,14 @@ xml.c was originally written by [ooxi/xml.c](https://github.com/ooxi/xml.c). Thi
 
 Currently required to build:
 
-- [CMake](https://cmake.org/) 3.1 or later
+- [CMake](https://cmake.org/) 3.14 or later (needed to fetch and build [cmocka](https://cmocka.org/) for tests)
 - A C11-capable C compiler (e.g. GCC, Clang)
 - No C++ compiler is required; the test suite is C-only.
 
 **Broader audience (direction):** We want to reach more developers. Planned steps include:
 - **Plain Makefile** — so you can build with just `make` and a C compiler, without CMake.
 - **ANSI C (C89/C90)** — so the library builds on older compilers and embedded toolchains. The codebase is currently C11; moving to ANSI C is a goal for this modernization project.
-- **C-only test suite** — the project uses a C-only test suite (see `test/unit-c.c`). A framework such as [cmocka](https://cmocka.org/) may be adopted so tests remain C-only and easy to run with a single compiler.
+- **C-only test suite** — the project uses [cmocka](https://cmocka.org/) for unit tests (see `test/unit-c.c`). CMake fetches and builds cmocka at a fixed version; no system install or C++ compiler is required.
 
 ## Downloads
 
@@ -53,6 +53,15 @@ Clone the repo and build with CMake:
     $ make && ctest --output-on-failure
 
 For a debug build: `cmake -DCMAKE_BUILD_TYPE=Debug ..` then rebuild.
+
+
+## Testing
+
+The test suite is C-only (see [cmocka](https://cmocka.org/)). From the build directory:
+
+    $ ctest --output-on-failure
+
+If [Valgrind](https://valgrind.org/) is installed, CMake adds an extra test **xml-test-c-valgrind** that runs the C tests under Valgrind (memcheck, leak check). Valgrind is optional—if it's not installed, that test is simply not added. For full instructions and how to install Valgrind, see [docs/quick_start_tests.md](docs/quick_start_tests.md).
 
 
 ## Development (this fork)

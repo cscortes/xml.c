@@ -36,6 +36,10 @@ gcc --version
 cmake --version
 ```
 
+### Optional: Valgrind (for memory-check tests)
+
+To run the optional Valgrind test (memory and leak checking), install Valgrind. See [quick_start_tests.md](quick_start_tests.md#installing-valgrind) for install commands on Fedora, Debian/Ubuntu, macOS, and WSL.
+
 ---
 
 ## Build the example (step by step)
@@ -125,5 +129,5 @@ Or with Make: `cd build && make && ctest --output-on-failure`.
 ## Next steps
 
 - **Use the library:** See [README](../README.md) for a short code example and API overview.
-- **Run the test suite:** `cmake --build build && ctest --test-dir build --output-on-failure`
+- **Run the test suite:** `cmake --build build && ctest --test-dir build --output-on-failure`. With [Valgrind](https://valgrind.org/) installed, an extra memory-check test is included; see [quick_start_tests.md](quick_start_tests.md).
 - **Development style:** See [programming_style.md](programming_style.md) for contribution guidelines.
