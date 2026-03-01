@@ -184,21 +184,21 @@ static void test_xml_parse_document_2(void **state) {
 	assert_true(string_equals(xml_node_name(root), "Parent"));
 	assert_int_equal(xml_node_children(root), 3);
 
-	struct xml_node* test_a = xml_easy_child(root, "This", "Is", "A", "Test", 0);
+	struct xml_node* test_a = xml_easy_child(root, (uint8_t const*)"This", (uint8_t const*)"Is", (uint8_t const*)"A", (uint8_t const*)"Test", 0);
 	assert_non_null(test_a);
 	assert_true(string_equals(xml_node_content(test_a), "Content A"));
 
-	struct xml_node* test_b = xml_easy_child(root, "This", "Is", "B", "Test", 0);
+	struct xml_node* test_b = xml_easy_child(root, (uint8_t const*)"This", (uint8_t const*)"Is", (uint8_t const*)"B", (uint8_t const*)"Test", 0);
 	assert_non_null(test_b);
 	assert_true(string_equals(xml_node_content(test_b), "Content B"));
 
-	struct xml_node* test_c = xml_easy_child(root, "This", "Is", "C", "Test", 0);
+	struct xml_node* test_c = xml_easy_child(root, (uint8_t const*)"This", (uint8_t const*)"Is", (uint8_t const*)"C", (uint8_t const*)"Test", 0);
 	assert_null(test_c);
 
-	struct xml_node* must_be_null = xml_easy_child(root, "Child");
+	struct xml_node* must_be_null = xml_easy_child(root, (uint8_t const*)"Child");
 	assert_null(must_be_null);
 
-	uint8_t* name_is = xml_easy_name(xml_easy_child(root, "This", "Is", 0));
+	uint8_t* name_is = xml_easy_name(xml_easy_child(root, (uint8_t const*)"This", (uint8_t const*)"Is", 0));
 	assert_string_equal((char const*)name_is, "Is");
 	free(name_is);
 
@@ -223,7 +223,7 @@ static void test_xml_parse_document_3(void **state) {
 	assert_non_null(document);
 
 	struct xml_node* element = xml_easy_child(
-		xml_document_root(document), "Element", "With", 0
+		xml_document_root(document), (uint8_t const*)"Element", (uint8_t const*)"With", 0
 	);
 	assert_non_null(element);
 	assert_true(string_equals(xml_node_content(element), "Child"));

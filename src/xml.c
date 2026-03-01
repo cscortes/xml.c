@@ -21,6 +21,7 @@
  *  3. This notice may not be removed or altered from any source distribution.
  */
 #include "xml.h"
+#include "xml_common.h"
 
 #ifdef XML_PARSER_VERBOSE
 #include <alloca.h>
@@ -319,11 +320,7 @@ static void xml_parser_error(struct xml_parser* parser, enum xml_parser_offset o
 	int row = 0;
 	int column = 0;
 
-	#define min(X,Y) ((X) < (Y) ? (X) : (Y))
-	#define max(X,Y) ((X) > (Y) ? (X) : (Y))
-	size_t character = max(0, min(parser->length, parser->position + offset));
-	#undef min
-	#undef max
+	size_t character = min(parser->length, parser->position + (size_t)(offset < 0 ? 0 : offset));
 
 	size_t position = 0; for (; position < character; ++position) {
 		column++;
@@ -386,11 +383,9 @@ static void xml_parser_consume(struct xml_parser* parser, size_t n) {
 	/* Debug information
 	 */
 	#ifdef XML_PARSER_VERBOSE
-	#define min(X,Y) ((X) < (Y) ? (X) : (Y))
 	char* consumed = alloca((n + 1) * sizeof(char));
 	memcpy(consumed, &parser->buffer[parser->position], min(n, parser->length - parser->position));
 	consumed[n] = 0;
-	#undef min
 
 	size_t message_buffer_length = 512;
 	char* message_buffer = alloca(512 * sizeof(char));
@@ -444,6 +439,7 @@ static void xml_skip_whitespace(struct xml_parser* parser) {
  * @see https://github.com/Molorius
  */
 static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, struct xml_string* tag_open) {
+	UNUSED(parser);
 	xml_parser_info(parser, "find_attributes");
 	char* tmp;
 	char* rest = NULL;
@@ -948,7 +944,7 @@ struct xml_document* xml_open_document(FILE* source) {
 	size_t buffer_size = 1;	// TODO 4069
 	uint8_t* buffer = malloc(buffer_size * sizeof(uint8_t));
 
-	/* Read hole file into buffer
+	/* Read whole file into buffer
 	 */
 	while (!feof(source)) {
 
@@ -1152,7 +1148,7 @@ struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name
 		 */
 		struct xml_string cn = {
 			.buffer = child_name,
-			.length = strlen(child_name)
+			.length = strlen((char const*)child_name)
 		};
 
 		/* Interate through all children
@@ -1243,9 +1239,7 @@ void xml_string_copy(struct xml_string* string, uint8_t* buffer, size_t length) 
 		return;
 	}
 
-	#define min(X,Y) ((X) < (Y) ? (X) : (Y))
 	length = min(length, string->length);
-	#undef min
 
 	memcpy(buffer, string->buffer, length);
 }

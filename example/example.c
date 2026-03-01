@@ -24,14 +24,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <xml.h>
-
-
+#include <xml_common.h>
 
 int main(int argc, char** argv) {
+	UNUSED(argc);
+	UNUSED(argv);
 
 	/* XML source, could be read from disk
 	 */
-	uint8_t* source = ""
+	uint8_t const* source = (uint8_t const*)""
 		"<Root>"
 			"<Hello>World</Hello>"
 			"<This>"
@@ -50,11 +51,11 @@ int main(int argc, char** argv) {
 	 *     copy to xml_parse_document which can be freed together with the
 	 *     document (`free_buffer' argument to `xml_document_free')
 	 */
-	struct xml_document* document = xml_parse_document(source, strlen(source));
+	struct xml_document* document = xml_parse_document((uint8_t*)source, strlen((char const*)source));
 
 	/* You _have_ to check the result of `xml_parse_document', if it's 0
 	 * then the source could not be parsed. If you think this is a bug in
-	 * xml.c, than use a debug build (cmake -DCMAKE_BUILD_TYPE=Debug) which
+	 * xml.c, then use a debug build (cmake -DCMAKE_BUILD_TYPE=Debug) which
 	 * will verbosely tell you about the parsing process
 	 */
 	if (!document) {

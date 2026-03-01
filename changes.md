@@ -4,6 +4,21 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.6.1] — 2026-03-01
+
+### Fixed
+
+- **Typos** — `src/xml.c`: "Read hole file" → "Read whole file". `example/example.c`: comment "than" → "then".
+- **Compiler warnings** — With `-Wall -Wextra -Wpedantic`: type-limits in `xml_parser_error` (removed `max(0, min(...))` with `size_t`); unused parameter in `xml_find_attributes` (`UNUSED(parser)`); pointer-sign for `strlen(child_name)` and in example/unit-c (`uint8_t const*` casts). All targets (xml, example, test) now build warning-free.
+
+### Added
+
+- **Strict compiler options** — `-Wall -Wextra -Wpedantic` enabled for the xml library, example, and test targets in CMake.
+- **xml_common.h** — New internal header with `min`, `max`, and `UNUSED` macros; used by `src/xml.c` and `example/example.c` (replaces local macro definitions).
+- **docs/code_changes_before_after.md** — Before/after summary of the typo, warning, and macro changes.
+
+---
+
 ## [0.6.0] — 2025-03-01
 
 ### Added

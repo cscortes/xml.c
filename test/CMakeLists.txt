@@ -38,6 +38,9 @@ target_compile_options(
 	"${PROJECT_NAME}-test-c"
 	PRIVATE
 		-std=c11
+		-Wall
+		-Wextra
+		-Wpedantic
 )
 
 target_link_libraries(

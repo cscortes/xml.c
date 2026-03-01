@@ -10,6 +10,9 @@ target_compile_options(
 	"${PROJECT_NAME}-example"
 	PRIVATE
 		-std=c11
+		-Wall
+		-Wextra
+		-Wpedantic
 )
 
 target_link_libraries(
