@@ -877,6 +877,104 @@ static void test_xml_comments_multiline(void **state) {
 }
 
 
+/**
+ * C-string helpers for attributes: xml_node_attribute_name_c_string and
+ * xml_node_attribute_content_c_string return 0-terminated copies; out-of-range returns NULL.
+ */
+static void test_attribute_c_string_helpers(void **state) {
+	(void)state;
+	SOURCE(source, "<Root><Node a=\"1\" b=\"two\">text</Node></Root>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 2);
+
+	uint8_t* name0 = xml_node_attribute_name_c_string(element, 0);
+	uint8_t* content0 = xml_node_attribute_content_c_string(element, 0);
+	assert_non_null(name0);
+	assert_non_null(content0);
+	assert_string_equal((char const*)name0, "a");
+	assert_string_equal((char const*)content0, "1");
+	free(name0);
+	free(content0);
+
+	uint8_t* name1 = xml_node_attribute_name_c_string(element, 1);
+	uint8_t* content1 = xml_node_attribute_content_c_string(element, 1);
+	assert_non_null(name1);
+	assert_non_null(content1);
+	assert_string_equal((char const*)name1, "b");
+	assert_string_equal((char const*)content1, "two");
+	free(name1);
+	free(content1);
+
+	/* Out-of-range index returns NULL */
+	assert_null(xml_node_attribute_name_c_string(element, 2));
+	assert_null(xml_node_attribute_content_c_string(element, 2));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_string_equals: same content returns true, different content or NULL returns false.
+ */
+static void test_xml_string_equals(void **state) {
+	(void)state;
+	SOURCE(source, "<r><a>x</a><b>y</b><c>x</c></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* a = xml_node_child(root, 0);
+	struct xml_node* b = xml_node_child(root, 1);
+	struct xml_node* c = xml_node_child(root, 2);
+	assert_non_null(a);
+	assert_non_null(b);
+	assert_non_null(c);
+
+	struct xml_string* content_a = xml_node_content(a);
+	struct xml_string* content_b = xml_node_content(b);
+	struct xml_string* content_c = xml_node_content(c);
+	assert_true(xml_string_equals(content_a, content_c));
+	assert_false(xml_string_equals(content_a, content_b));
+	assert_false(xml_string_equals(content_a, NULL));
+	assert_false(xml_string_equals(NULL, content_a));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_string_equals_cstr: compare xml_string to C string; NULL string returns false; NULL cstr treated as empty.
+ */
+static void test_xml_string_equals_cstr(void **state) {
+	(void)state;
+	SOURCE(source, "<r><a>hello</a></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* a = xml_node_child(root, 0);
+	assert_non_null(a);
+
+	struct xml_string* content_hello = xml_node_content(a);
+
+	assert_true(xml_string_equals_cstr(content_hello, (uint8_t const*)"hello"));
+	assert_false(xml_string_equals_cstr(content_hello, (uint8_t const*)"world"));
+	assert_false(xml_string_equals_cstr(content_hello, (uint8_t const*)"hell"));
+	assert_false(xml_string_equals_cstr(NULL, (uint8_t const*)"x"));
+	/* NULL cstr treated as empty: compare only when we have a length-0 string; node content for empty element may be NULL so we skip that here */
+
+	xml_document_free(document, true);
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_0),
 	cmocka_unit_test(test_xml_parse_document_1),
@@ -905,6 +1003,9 @@ static void test_xml_comments_multiline(void **state) {
 	cmocka_unit_test(test_xml_comments_before_self_closing_child),
 	cmocka_unit_test(test_xml_comments_root_only_comment_then_close),
 	cmocka_unit_test(test_xml_comments_multiline),
+	cmocka_unit_test(test_attribute_c_string_helpers),
+	cmocka_unit_test(test_xml_string_equals),
+	cmocka_unit_test(test_xml_string_equals_cstr),
 };
 
 void get_unit_c_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

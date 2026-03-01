@@ -78,6 +78,16 @@ static void test_api_null_node_easy(void **state) {
 
 
 /**
+ * xml_node_attribute_name_c_string(NULL, 0) and xml_node_attribute_content_c_string(NULL, 0) must not crash and return NULL.
+ */
+static void test_api_null_node_attribute_c_string(void **state) {
+	(void)state;
+	assert_null(xml_node_attribute_name_c_string(NULL, 0));
+	assert_null(xml_node_attribute_content_c_string(NULL, 0));
+}
+
+
+/**
  * xml_string_length(NULL) must not crash and return 0.
  * xml_string_copy(NULL, buf, n) must not crash and must not write (no-op).
  */
@@ -92,12 +102,26 @@ static void test_api_null_string(void **state) {
 }
 
 
+/**
+ * xml_string_equals and xml_string_equals_cstr with NULL must not crash; return false when either argument is NULL.
+ */
+static void test_api_null_string_compare(void **state) {
+	(void)state;
+	/* With NULL we cannot get a valid xml_string without a document; we only test NULL first arg. */
+	assert_false(xml_string_equals(NULL, NULL));
+	assert_false(xml_string_equals_cstr(NULL, (uint8_t const*)"x"));
+	assert_false(xml_string_equals_cstr(NULL, NULL));
+}
+
+
 static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_document_free_null),
 	cmocka_unit_test(test_api_null_document),
 	cmocka_unit_test(test_api_null_node),
 	cmocka_unit_test(test_api_null_node_easy),
+	cmocka_unit_test(test_api_null_node_attribute_c_string),
 	cmocka_unit_test(test_api_null_string),
+	cmocka_unit_test(test_api_null_string_compare),
 };
 
 void get_unit_c_null_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

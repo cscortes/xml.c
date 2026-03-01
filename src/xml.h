@@ -201,6 +201,24 @@ uint8_t* xml_node_content_c_string(struct xml_node* node);
 
 
 /**
+ * @param node The node
+ * @param attribute Zero-based index of the attribute
+ * @return 0-terminated C string copy of the attribute name, or NULL if node is NULL or index out of range (caller must free)
+ */
+uint8_t* xml_node_attribute_name_c_string(struct xml_node* node, size_t attribute);
+
+
+
+/**
+ * @param node The node
+ * @param attribute Zero-based index of the attribute
+ * @return 0-terminated C string copy of the attribute content, or NULL if node is NULL or index out of range (caller must free)
+ */
+uint8_t* xml_node_attribute_content_c_string(struct xml_node* node, size_t attribute);
+
+
+
+/**
  * @param string The string
  * @return Length of the string
  */
@@ -218,6 +236,24 @@ size_t xml_string_length(struct xml_string* string);
  * @warning Will write at most length bytes, even if the string is longer
  */
 void xml_string_copy(struct xml_string* string, uint8_t* buffer, size_t length);
+
+
+
+/**
+ * @param a First string (may be NULL)
+ * @param b Second string (may be NULL)
+ * @return true iff both are non-NULL and have the same length and byte content
+ */
+bool xml_string_equals(struct xml_string* a, struct xml_string* b);
+
+
+
+/**
+ * @param string An xml_string (may be NULL)
+ * @param cstr 0-terminated C string (NULL is treated as empty string)
+ * @return true iff string is non-NULL and its content equals cstr
+ */
+bool xml_string_equals_cstr(struct xml_string* string, uint8_t const* cstr);
 
 #ifdef __cplusplus
 }

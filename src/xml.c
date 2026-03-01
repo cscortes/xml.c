@@ -189,29 +189,6 @@ static size_t get_zero_terminated_array_nodes(struct xml_node** nodes) {
 
 /**
  * [PRIVATE]
- *
- * @warning No UTF conversions will be attempted
- *
- * @return true iff a == b
- */
-static _Bool xml_string_equals(struct xml_string* a, struct xml_string* b) {
-
-	if (a->length != b->length) {
-		return false;
-	}
-
-	size_t i = 0; for (; i < a->length; ++i) {
-		if (a->buffer[i] != b->buffer[i]) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-/**
- * [PRIVATE]
  */
 static uint8_t* xml_string_clone(struct xml_string* s) {
 	if (!s) {
@@ -1431,6 +1408,24 @@ uint8_t* xml_node_content_c_string(struct xml_node* node) {
 /**
  * [PUBLIC API]
  */
+uint8_t* xml_node_attribute_name_c_string(struct xml_node* node, size_t attribute) {
+	struct xml_string* s = xml_node_attribute_name(node, attribute);
+	return s ? xml_string_clone(s) : 0;
+}
+
+
+/**
+ * [PUBLIC API]
+ */
+uint8_t* xml_node_attribute_content_c_string(struct xml_node* node, size_t attribute) {
+	struct xml_string* s = xml_node_attribute_content(node, attribute);
+	return s ? xml_string_clone(s) : 0;
+}
+
+
+/**
+ * [PUBLIC API]
+ */
 size_t xml_string_length(struct xml_string* string) {
 	if (!string) {
 		return 0;
@@ -1450,5 +1445,37 @@ void xml_string_copy(struct xml_string* string, uint8_t* buffer, size_t length) 
 	length = MIN(length, string->length);
 
 	memcpy(buffer, string->buffer, length);
+}
+
+
+/**
+ * [PUBLIC API]
+ */
+bool xml_string_equals(struct xml_string* a, struct xml_string* b) {
+	if (!a || !b) {
+		return false;
+	}
+	if (a->length != b->length) {
+		return false;
+	}
+	return memcmp(a->buffer, b->buffer, a->length) == 0;
+}
+
+
+/**
+ * [PUBLIC API]
+ */
+bool xml_string_equals_cstr(struct xml_string* string, uint8_t const* cstr) {
+	if (!string) {
+		return false;
+	}
+	size_t cstr_len = (cstr == NULL) ? 0 : strlen((char const*)cstr);
+	if (string->length != cstr_len) {
+		return false;
+	}
+	if (cstr_len == 0) {
+		return true;
+	}
+	return memcmp(string->buffer, cstr, string->length) == 0;
 }
 

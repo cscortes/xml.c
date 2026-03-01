@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.10.1] — 2026-03-01
+
+### Changed
+
+- **Internal refactor** — Removed `xml_string_equals_internal`; public `xml_string_equals` now contains the full comparison logic (NULL checks + memcmp). Parser call sites use `xml_string_equals` directly.
+
+---
+
 ## [0.10.0] — 2026-03-01
 
 ### Changed

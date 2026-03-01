@@ -160,6 +160,26 @@ Frees all resources associated with the document. All xml_node and xml_string re
 **Returns:** 0-terminated C string copy of node content (caller must free)
 
 
+## xml_node_attribute_name_c_string
+
+**uint8_t *** `xml_node_attribute_name_c_string`(struct xml_node *node, size_t attribute)
+
+- **node** — The node
+- **attribute** — Zero-based index of the attribute
+
+**Returns:** 0-terminated C string copy of the attribute name, or NULL if node is NULL or index out of range (caller must free)
+
+
+## xml_node_attribute_content_c_string
+
+**uint8_t *** `xml_node_attribute_content_c_string`(struct xml_node *node, size_t attribute)
+
+- **node** — The node
+- **attribute** — Zero-based index of the attribute
+
+**Returns:** 0-terminated C string copy of the attribute content, or NULL if node is NULL or index out of range (caller must free)
+
+
 ## xml_string_length
 
 **size_t** `xml_string_length`(struct xml_string *string)
@@ -182,4 +202,24 @@ Copies the string into the supplied buffer
 **Warning:** String will not be 0-terminated
 
 **Warning:** Will write at most length bytes, even if the string is longer
+
+
+## xml_string_equals
+
+**bool** `xml_string_equals`(struct xml_string *a, struct xml_string *b)
+
+- **a** — First string (may be NULL)
+- **b** — Second string (may be NULL)
+
+**Returns:** true iff both are non-NULL and have the same length and byte content
+
+
+## xml_string_equals_cstr
+
+**bool** `xml_string_equals_cstr`(struct xml_string *string, uint8_t const *cstr)
+
+- **string** — An xml_string (may be NULL)
+- **cstr** — 0-terminated C string (NULL is treated as empty string)
+
+**Returns:** true iff string is non-NULL and its content equals cstr
 
