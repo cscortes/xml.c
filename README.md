@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.6.5 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.7.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -40,8 +40,9 @@ For the full list of fixes and remaining candidates, see [docs/issues.md](docs/i
 - **Elements with attributes** — Elements like `<Node attr="value">` parse correctly; the parser reads the full opening tag (including attributes) before expecting `'>'`.
 - **Multiline opening tags** — Start tags that span multiple lines (e.g. in SVG or Tiled XML) are supported.
 - **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
+- **XML comments** — `<!-- ... -->` are skipped by the parser (before tags and between nodes); see [docs/issues.md](docs/issues.md) #21.
 
-**Planned or candidate features (from upstream issue requests):** XML comments, processing instructions, CDATA, and text helpers. See [docs/issues.md](docs/issues.md) for details.
+**Planned or candidate features (from upstream issue requests):** Processing instructions, CDATA, and text helpers. See [docs/issues.md](docs/issues.md) for details.
 
 
 ## Goals (this sprint)

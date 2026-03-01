@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.7.0] — 2026-03-01
+
+### Added
+
+- **XML comments (#21)** — Parser skips `<!-- ... -->` comments before open/close tags and between nodes. [docs/issues.md](docs/issues.md) and README updated; multiple unit tests added: comment before root, consecutive comments, empty/minimal comments, comment between text and closing tag, comment before self-closing child, root with only comment then close, multiline comments.
+
+---
+
 ## [0.6.5] — 2026-03-01
 
 ### Fixed

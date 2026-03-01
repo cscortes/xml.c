@@ -419,6 +419,37 @@ static void xml_skip_whitespace(struct xml_parser* parser) {
 
 /**
  * [PRIVATE]
+ * Skips an XML comment \c <!-- ... --> if the parser is positioned at \c <!--.
+ * (docs/issues.md #21)
+ *
+ * @return true if a comment was skipped, false if not at \c <!-- or on error
+ */
+static bool xml_skip_comment(struct xml_parser* parser) {
+	xml_parser_info(parser, "comment");
+	if (parser->position + 4 > parser->length)
+		return false;
+	if (parser->buffer[parser->position] != '<'
+	    || parser->buffer[parser->position + 1] != '!'
+	    || parser->buffer[parser->position + 2] != '-'
+	    || parser->buffer[parser->position + 3] != '-')
+		return false;
+	parser->position += 4;
+	while (parser->position + 3 <= parser->length) {
+		if (parser->buffer[parser->position] == '-'
+		    && parser->buffer[parser->position + 1] == '-'
+		    && parser->buffer[parser->position + 2] == '>') {
+			parser->position += 3;
+			return true;
+		}
+		parser->position++;
+	}
+	xml_parser_error(parser, CURRENT_CHARACTER, "xml_skip_comment::comment not closed (missing -->)");
+	return false;
+}
+
+
+/**
+ * [PRIVATE]
  * Skip past any characters in delim (whitespace), return pointer to first non-delim or to end.
  */
 static char* skip_delim(char* p, const char* delim) {
@@ -658,6 +689,8 @@ static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) 
 static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_open");
 	xml_skip_whitespace(parser);
+	while (xml_skip_comment(parser))
+		xml_skip_whitespace(parser);
 
 	/* Consume `<'
 	 */
@@ -685,6 +718,8 @@ static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_close");
 	xml_skip_whitespace(parser);
+	while (xml_skip_comment(parser))
+		xml_skip_whitespace(parser);
 
 	/* Consume `</'
 	 */
@@ -836,7 +871,15 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 
 	/* Otherwise children are to be expected
 	 */
-	} else while ('/' != xml_parser_peek(parser, NEXT_CHARACTER)) {
+	} else for (;;) {
+		xml_skip_whitespace(parser);
+		while (xml_skip_comment(parser))
+			xml_skip_whitespace(parser);
+		if (parser->position >= parser->length)
+			break;
+		if ('<' == xml_parser_peek(parser, CURRENT_CHARACTER)
+		    && '/' == xml_parser_peek(parser, NEXT_CHARACTER))
+			break;
 
 		/* Parse child node
 		 */

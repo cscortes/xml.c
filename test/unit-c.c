@@ -675,6 +675,174 @@ static void test_realloc_failure_no_leak(void **state) {
 }
 
 
+/**
+ * XML comments <!-- ... --> are skipped by the parser (docs/issues.md #21).
+ */
+static void test_xml_comments_skipped(void **state) {
+	(void)state;
+	SOURCE(source, ""
+		"<!-- before root -->\n"
+		"<Root>\n"
+		"  <!-- before first -->\n"
+		"  <A>one</A>\n"
+		"  <!-- between -->\n"
+		"  <B>two</B>\n"
+		"  <!-- before close -->\n"
+		"</Root>\n"
+	);
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "Root"));
+	assert_int_equal(xml_node_children(root), 2);
+
+	struct xml_node* a = xml_node_child(root, 0);
+	struct xml_node* b = xml_node_child(root, 1);
+	assert_non_null(a);
+	assert_non_null(b);
+	assert_true(string_equals(xml_node_name(a), "A"));
+	assert_true(string_equals(xml_node_content(a), "one"));
+	assert_true(string_equals(xml_node_name(b), "B"));
+	assert_true(string_equals(xml_node_content(b), "two"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Comment before root only: minimal comment handling.
+ */
+static void test_xml_comments_before_root_only(void **state) {
+	(void)state;
+	SOURCE(source, "<!-- c --><r></r>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	assert_int_equal(xml_node_children(root), 0);
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Multiple consecutive comments before root and between nodes.
+ */
+static void test_xml_comments_consecutive(void **state) {
+	(void)state;
+	SOURCE(source, "<!-- a --><!-- b --><Root><A></A>\n<!-- mid -->\n<B></B></Root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "Root"));
+	assert_int_equal(xml_node_children(root), 2);
+	assert_true(string_equals(xml_node_name(xml_node_child(root, 0)), "A"));
+	assert_true(string_equals(xml_node_name(xml_node_child(root, 1)), "B"));
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Empty or minimal comments.
+ */
+static void test_xml_comments_empty_or_minimal(void **state) {
+	(void)state;
+	SOURCE(source, "<!----><r></r>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	xml_document_free(document, true);
+
+	SOURCE(source2, "<!-- --><r></r>");
+	document = xml_parse_document(source2, strlen((char const*)source2));
+	assert_non_null(document);
+	root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Comment between text content and closing tag: comment is skipped, content is what precedes it.
+ * (Content stops at first '<'; the comment is skipped when parsing the closing tag.)
+ */
+static void test_xml_comments_inside_text_before_close(void **state) {
+	(void)state;
+	SOURCE(source, "<r>hello <!-- ignored --></r>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	assert_true(string_equals(xml_node_content(root), "hello"));
+	assert_int_equal(xml_node_children(root), 0);
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Comment before a self-closing child.
+ * (Self-closing tags yield a tag name that includes the trailing slash, e.g. "empty/".)
+ */
+static void test_xml_comments_before_self_closing_child(void **state) {
+	(void)state;
+	SOURCE(source, "<r><!-- comment --><empty/></r>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	assert_int_equal(xml_node_children(root), 1);
+	struct xml_node* child = xml_node_child(root, 0);
+	assert_non_null(child);
+	assert_true(string_equals(xml_node_name(child), "empty/"));
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Root with only a comment then closing tag (no children, no text).
+ */
+static void test_xml_comments_root_only_comment_then_close(void **state) {
+	(void)state;
+	SOURCE(source, "<r><!-- only --></r>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	assert_int_equal(xml_node_children(root), 0);
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Comment spanning multiple lines.
+ */
+static void test_xml_comments_multiline(void **state) {
+	(void)state;
+	SOURCE(source, ""
+		"<!--\n"
+		"  line one\n"
+		"  line two\n"
+		"--><r>ok</r>"
+	);
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_true(string_equals(xml_node_name(root), "r"));
+	assert_true(string_equals(xml_node_content(root), "ok"));
+	xml_document_free(document, true);
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_0),
 	cmocka_unit_test(test_xml_parse_document_1),
@@ -695,6 +863,14 @@ static void test_realloc_failure_no_leak(void **state) {
 	cmocka_unit_test(test_find_node_by_tag_name),
 	cmocka_unit_test(test_parse_error_at_end_of_buffer),
 	cmocka_unit_test(test_realloc_failure_no_leak),
+	cmocka_unit_test(test_xml_comments_skipped),
+	cmocka_unit_test(test_xml_comments_before_root_only),
+	cmocka_unit_test(test_xml_comments_consecutive),
+	cmocka_unit_test(test_xml_comments_empty_or_minimal),
+	cmocka_unit_test(test_xml_comments_inside_text_before_close),
+	cmocka_unit_test(test_xml_comments_before_self_closing_child),
+	cmocka_unit_test(test_xml_comments_root_only_comment_then_close),
+	cmocka_unit_test(test_xml_comments_multiline),
 };
 
 void get_unit_c_tests(const struct CMUnitTest** out_tests, size_t* out_count) {
