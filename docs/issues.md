@@ -10,7 +10,7 @@ Fixes and features tracked from [ooxi/xml.c](https://github.com/ooxi/xml.c) issu
 | **Already fixed** | #26 | Parsing error with xml header and empty element | Closed upstream; this fork handles empty/self-closing elements and related parse paths. |
 | **Already fixed** | #39 (part) | Does not handle new lines in tags | This fork parses full opening tags up to `'>'`, so multiline tags (e.g. SVG) work. |
 | **Already fixed** | #18 | Possible memory leak | Closed upstream; this fork has realloc handling and safe `xml_document_free`. |
-| **Candidate** | #33 | Does not handle attributes with spaces in the content | Use quote-aware tokenization in attribute parsing. |
+| **Already fixed** | #33 | Does not handle attributes with spaces in the content | This fork uses quote-aware parsing so attribute values may contain spaces (XML-compliant). |
 | **Candidate** | #38 | parse error (Tiled/SVG-style XML) | Resolved by fixing #33 (and any remaining newline handling). |
 | **Already fixed** | #31 | Check missing headers | Documented: [src/xml.h](src/xml.h) states it is self-contained (stdbool, stdint, stdio, string); example and README include string.h and describe required headers. |
 

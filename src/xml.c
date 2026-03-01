@@ -419,8 +419,17 @@ static void xml_skip_whitespace(struct xml_parser* parser) {
 
 /**
  * [PRIVATE]
+ * Skip past any characters in delim (whitespace), return pointer to first non-delim or to end.
+ */
+static char* skip_delim(char* p, const char* delim) {
+	return p + strspn(p, delim);
+}
+
+/**
+ * [PRIVATE]
  *
  * Finds and creates all attributes on the given node.
+ * Uses quote-aware parsing so attribute values may contain spaces (XML-compliant; docs/issues.md #33).
  *
  * @author Blake Felt
  * @see https://github.com/Molorius
@@ -431,80 +440,127 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 	char* tmp;
 	char* rest = NULL;
 	char* token;
-	char* str_name;
-	char* str_content;
 	const unsigned char* start_name;
 	const unsigned char* start_content;
+	size_t name_len;
+	size_t content_len;
 	size_t old_elements;
 	size_t new_elements;
 	struct xml_attribute* new_attribute;
 	struct xml_attribute** attributes;
-	int position;
+	const char* delim;
 
 	attributes = calloc(1, sizeof(struct xml_attribute*));
 	attributes[0] = 0;
 
 	tmp = (char*) xml_string_clone(tag_open);
+	delim = XML_ATTRIBUTE_TOKEN_DELIMITERS();
 
-	/* Split on space and newline so multiline opening tags (Tiled/SVG-style) work:
-	 * first token is the tag name only; rest are attr="value" tokens. See docs/issues.md #38, #39.
-	 */
-	token = xml_strtok_r(tmp, XML_ATTRIBUTE_TOKEN_DELIMITERS(), &rest);
-	if(token == NULL) {
+	/* First token is the tag name; remainder is attributes (docs/issues.md #38, #39). */
+	token = xml_strtok_r(tmp, delim, &rest);
+	if (token == NULL) {
 		goto cleanup;
 	}
 	tag_open->length = strlen(token);
 
-	for(token = xml_strtok_r(NULL, XML_ATTRIBUTE_TOKEN_DELIMITERS(), &rest); token != NULL; token = xml_strtok_r(NULL, XML_ATTRIBUTE_TOKEN_DELIMITERS(), &rest)) {
-		str_name = malloc(strlen(token)+1);
-		str_content = malloc(strlen(token)+1);
-		// %s=\"%s\" wasn't working for some reason, ugly hack to make it work
-		if(sscanf(token, "%[^=]=\"%[^\"]", str_name, str_content) != 2) {
-			if(sscanf(token, "%[^=]=\'%[^\']", str_name, str_content) != 2) {
-				free(str_name);
-				free(str_content);
-				continue;
-			}
+	/* Parse remainder with quote-aware scan: name="value" or name='value' (value may contain spaces). */
+	while (rest != NULL) {
+		char* ptr;
+		char* name_start;
+		char* name_end;
+		char* eq;
+		char quote;
+		char* value_start;
+		char* value_end;
+		ptrdiff_t offset_name;
+		ptrdiff_t offset_content;
+
+		ptr = skip_delim(rest, delim);
+		if (*ptr == '\0') {
+			break;
 		}
-		position = token-tmp;
-		start_name = &tag_open->buffer[position];
-		start_content = &tag_open->buffer[position + strlen(str_name) + 2];
+
+		eq = strchr(ptr, '=');
+		if (eq == NULL || eq == ptr) {
+			rest = eq ? eq + 1 : ptr + strlen(ptr);
+			continue;
+		}
+
+		name_start = ptr;
+		name_end = eq;
+		while (name_end > name_start && strchr(delim, (unsigned char)name_end[-1]) != NULL) {
+			name_end--;
+		}
+		name_len = (size_t)(name_end - name_start);
+		if (name_len == 0) {
+			rest = eq + 1;
+			continue;
+		}
+
+		ptr = eq + 1;
+		ptr = skip_delim(ptr, delim);
+		if (*ptr != '"' && *ptr != '\'') {
+			rest = ptr + 1;
+			continue;
+		}
+		quote = *ptr;
+		value_start = ptr + 1;
+		value_end = strchr(value_start, (int)(unsigned char)quote);
+		if (value_end == NULL) {
+			rest = value_start + strlen(value_start);
+			continue;
+		}
+		content_len = (size_t)(value_end - value_start);
+
+		offset_name = name_start - tmp;
+		offset_content = value_start - tmp;
+		start_name = &tag_open->buffer[offset_name];
+		start_content = &tag_open->buffer[offset_content];
 
 		new_attribute = malloc(sizeof(struct xml_attribute));
+		if (!new_attribute) {
+			goto cleanup_attributes;
+		}
 		new_attribute->name = malloc(sizeof(struct xml_string));
-		new_attribute->name->buffer = (unsigned char*)start_name;
-		new_attribute->name->length = strlen(str_name);
 		new_attribute->content = malloc(sizeof(struct xml_string));
+		if (!new_attribute->name || !new_attribute->content) {
+			if (new_attribute->name) free(new_attribute->name);
+			if (new_attribute->content) free(new_attribute->content);
+			free(new_attribute);
+			goto cleanup_attributes;
+		}
+		new_attribute->name->buffer = (unsigned char*)start_name;
+		new_attribute->name->length = name_len;
 		new_attribute->content->buffer = (unsigned char*)start_content;
-		new_attribute->content->length = strlen(str_content);
+		new_attribute->content->length = content_len;
 
 		old_elements = get_zero_terminated_array_attributes(attributes);
 		new_elements = old_elements + 1;
 		{
-			struct xml_attribute** new_attributes = realloc(attributes, (new_elements+1)*sizeof(struct xml_attribute*));
+			struct xml_attribute** new_attributes = realloc(attributes, (new_elements + 1) * sizeof(struct xml_attribute*));
 			if (!new_attributes) {
 				xml_attribute_free(new_attribute);
-				/* Free existing attributes and array so caller can treat as failure */
-				struct xml_attribute** at = attributes;
-				while (*at) {
-					xml_attribute_free(*at);
-					++at;
-				}
-				free(attributes);
-				attributes = NULL;
-				goto cleanup;
+				goto cleanup_attributes;
 			}
 			attributes = new_attributes;
 		}
-
-		attributes[new_elements-1] = new_attribute;
+		attributes[new_elements - 1] = new_attribute;
 		attributes[new_elements] = 0;
 
-
-		free(str_name);
-		free(str_content);
+		rest = value_end + 1;
 	}
 
+	goto cleanup;
+
+cleanup_attributes: {
+		struct xml_attribute** at = attributes;
+		while (at && *at) {
+			xml_attribute_free(*at);
+			++at;
+		}
+		free(attributes);
+		attributes = NULL;
+	}
 cleanup:
 	free(tmp);
 	return attributes;

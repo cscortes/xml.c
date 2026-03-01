@@ -4,6 +4,18 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.6.5] — 2026-03-01
+
+### Fixed
+
+- **#33 Attribute values with spaces** — Parser now uses quote-aware attribute parsing so values like `title="Hello World"` are parsed correctly (XML-compliant). Attribute boundaries are found by scanning for `name="value"` / `name='value'` instead of splitting on spaces. [docs/issues.md](docs/issues.md) and README "Fixes in this project" updated.
+
+### Added
+
+- **Test for attribute value with spaces** — `test_attribute_value_with_spaces` in [test/unit-c.c](test/unit-c.c) ensures one attribute with content `"Hello World"` is parsed from `<Node title="Hello World">`.
+
+---
+
 ## [0.6.4] — 2026-03-01
 
 ### Added

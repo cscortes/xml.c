@@ -409,6 +409,33 @@ static void test_attributes_in_memory_2(void **state) {
 
 
 /**
+ * Attribute value with spaces in content (upstream #33).
+ * Parser uses space-based tokenization, so quoted values containing spaces
+ * are split incorrectly. This test fails until quote-aware tokenization
+ * is used in attribute parsing.
+ *
+ * @see docs/issues.md #33
+ */
+static void test_attribute_value_with_spaces(void **state) {
+	(void)state;
+	SOURCE(source, "<Root><Node title=\"Hello World\">text</Node></Root>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* element = xml_node_child(root, 0);
+
+	assert_non_null(element);
+	assert_int_equal(xml_node_attributes(element), 1);
+	assert_true(string_equals(xml_node_attribute_name(element, 0), "title"));
+	assert_true(string_equals(xml_node_attribute_content(element, 0), "Hello World"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
  * Attributes from file: node with 0 attributes.
  * xml_open_document(handle); input/test-attributes-0.xml.
  */
@@ -660,6 +687,7 @@ static void test_realloc_failure_no_leak(void **state) {
 	cmocka_unit_test(test_attributes_in_memory_0),
 	cmocka_unit_test(test_attributes_in_memory_1),
 	cmocka_unit_test(test_attributes_in_memory_2),
+	cmocka_unit_test(test_attribute_value_with_spaces),
 	cmocka_unit_test(test_attributes_from_file_0),
 	cmocka_unit_test(test_attributes_from_file_1),
 	cmocka_unit_test(test_attributes_from_file_2),

@@ -89,6 +89,7 @@ This document defines the test categories for the xml.c library, inventories the
 | `test_attributes_in_memory_0` | unit-c.c | In-memory; first child has 0 attributes. | SOURCE (in-memory) |
 | `test_attributes_in_memory_1` | unit-c.c | In-memory; first child has 1 attribute. | SOURCE (in-memory) |
 | `test_attributes_in_memory_2` | unit-c.c | In-memory; first child has 2 attributes. | SOURCE (in-memory) |
+| `test_attribute_value_with_spaces` | unit-c.c | Attribute value with spaces (e.g. `title="Hello World"`); upstream #33. | SOURCE (in-memory) |
 | `test_attributes_from_file_0` | unit-c.c | File; first child has 0 attributes. | input/test-attributes-0.xml |
 | `test_attributes_from_file_1` | unit-c.c | File; first child has 1 attribute. | input/test-attributes-1.xml |
 | `test_attributes_from_file_2` | unit-c.c | File; first child has 2 attributes. | input/test-attributes-2.xml |

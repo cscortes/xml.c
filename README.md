@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.6.4 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.6.5 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -26,6 +26,7 @@ Issues from the [original ooxi/xml.c](https://github.com/ooxi/xml.c) repository 
 - **#18** — Possible memory leak (closed upstream; this fork additionally fixes realloc handling and `xml_document_free(NULL)` safety).
 - **#31** — Check missing headers: the library header is documented as self-contained; the example and README list required includes (e.g. `stdint.h` via `<xml.h>`, `string.h` for `strlen`).
 - **#39 (part)** — Tags split across multiple lines (e.g. SVG): opening tags are now parsed in full up to `'>'`, so multiline start tags parse correctly.
+- **#33** — Attribute values with spaces: the parser now uses quote-aware parsing so values like `title="Hello World"` are correct (XML-compliant).
 
 For the full list of fixes and remaining candidates, see [docs/issues.md](docs/issues.md).
 
@@ -39,7 +40,7 @@ For the full list of fixes and remaining candidates, see [docs/issues.md](docs/i
 - **Multiline opening tags** — Start tags that span multiple lines (e.g. in SVG or Tiled XML) are supported.
 - **API and tooling** — `xml_document_buffer_length`, NULL-safe public API where documented, comprehensive C unit tests (cmocka), optional Valgrind test, and API docs ([docs/xml_api.md](docs/xml_api.md)).
 
-**Planned or candidate features (from upstream issue requests):** XML comments, processing instructions, CDATA, attribute values with spaces, and text helpers. See [docs/issues.md](docs/issues.md) for details.
+**Planned or candidate features (from upstream issue requests):** XML comments, processing instructions, CDATA, and text helpers. See [docs/issues.md](docs/issues.md) for details.
 
 
 ## Goals (this sprint)
