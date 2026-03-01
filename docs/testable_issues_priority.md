@@ -102,11 +102,11 @@ Priority is by **severity (desc), then likelihood (desc)**. Suggested tests are 
 
 | Item | Likelihood | Severity | Reproducible? |
 |------|------------|----------|----------------|
-| `attributes = realloc(...)`, `children = realloc(...)`, `buffer = realloc(...)` — on NULL, original pointer is lost | **1** | **4** | **Not in plain cmocka** |
+| `attributes = realloc(...)`, `children = realloc(...)`, `buffer = realloc(...)` — on NULL, original pointer is lost | **1** | **4** | **Yes (wrap realloc + will_return_ptr)** |
 
-**Why not directly testable:** Would require failing `realloc` (e.g. custom allocator, LD_PRELOAD, or mock). Without that, you can’t reproduce the leak in a normal cmocka run.
+**Code status:** Fixed. All three sites use a temporary (`new_ptr = realloc(ptr, size)`); on NULL the original pointer is preserved, resources are freed or handed to existing cleanup, and no leak or double-free occurs.
 
-**Note:** If you add a test hook or replaceable allocator, you could add a test that fails realloc and asserts no leak and no double-free. Otherwise leave as “not reproducible with current cmocka setup.”
+**Testability:** Reproducible with cmocka by mocking `realloc` via the linker's `--wrap=realloc`: the test executable links with `wrap_realloc.c` (defining `__wrap_realloc`) and `LINKER:--wrap=realloc`. A test uses `will_return_ptr(__wrap_realloc, NULL)` so the next `realloc` returns NULL, then parses XML that triggers that realloc and asserts the document is NULL and (under Valgrind) no leak and no double-free.
 
 ---
 
@@ -120,7 +120,7 @@ Priority is by **severity (desc), then likelihood (desc)**. Suggested tests are 
 | 3 | `xml_document_free(NULL, ...)` | 3 | 4 | Unit: free(NULL), no crash |
 | 4 | `xml_parser_error` buffer over-read | 2 | 3 | Unit + ASan: trigger error at end of buffer |
 | 4 | `xml_open_document` feof / read error | 2 | 3 | Unit: small file, assert correct content/length |
-| 5 | `realloc` on failure | 1 | 4 | Not testable without allocator injection |
+| 5 | `realloc` on failure | 1 | 4 | Unit: wrap realloc, will_return_ptr NULL, assert no leak (Valgrind) |
 
 ---
 

@@ -25,6 +25,7 @@ add_executable(
 	"${CMAKE_CURRENT_LIST_DIR}/test_main.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-null.c"
+	"${CMAKE_CURRENT_LIST_DIR}/wrap_realloc.c"
 )
 
 target_include_directories(
@@ -44,6 +45,13 @@ target_link_libraries(
 	PRIVATE
 		xml
 		cmocka
+)
+
+# Allow tests to mock realloc (e.g. make it return NULL) via cmocka will_return_ptr(__wrap_realloc, NULL)
+target_link_options(
+	"${PROJECT_NAME}-test-c"
+	PRIVATE
+		"LINKER:--wrap=realloc"
 )
 
 add_test(

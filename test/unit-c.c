@@ -22,9 +22,11 @@
  */
 #include <stdbool.h>
 #include <stddef.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <cmocka.h>
 #include <xml.h>
 #include "test_runner.h"
@@ -455,11 +457,62 @@ static void test_find_node_by_tag_name(void **state) {
  * Malformed XML that triggers a parse error at end of buffer (e.g. no closing tag).
  * Expect NULL document. When run under ASan, ensures xml_parser_error does not
  * read past end of buffer when reporting the error.
+ * stderr is redirected during the parse so expected parser error messages
+ * do not appear in the test output.
  */
 static void test_parse_error_at_end_of_buffer(void **state) {
 	(void)state;
 	SOURCE(src, "<root>");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
 	struct xml_document* doc = xml_parse_document(src, (size_t)strlen((char const*)src));
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+
+	assert_null(doc);
+	free(src);
+}
+
+
+/**
+ * When realloc fails (returns NULL), parser must not leak and must not double-free.
+ * Uses cmocka + linker --wrap=realloc so the next realloc returns NULL.
+ * Parsing "<r><c/></r>" triggers a realloc when adding the first child; we make that fail.
+ * stderr is redirected to /dev/null during the parse so expected parser error messages
+ * do not appear in the test output and confuse new developers.
+ */
+static void test_realloc_failure_no_leak(void **state) {
+	(void)state;
+	will_return_ptr(__wrap_realloc, NULL);
+	SOURCE(src, "<r><c/></r>");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	struct xml_document* doc = xml_parse_document(src, (size_t)strlen((char const*)src));
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+
 	assert_null(doc);
 	free(src);
 }
@@ -479,6 +532,7 @@ static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_attributes_from_file_2),
 	cmocka_unit_test(test_find_node_by_tag_name),
 	cmocka_unit_test(test_parse_error_at_end_of_buffer),
+	cmocka_unit_test(test_realloc_failure_no_leak),
 };
 
 void get_unit_c_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

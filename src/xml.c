@@ -494,7 +494,22 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 
 		old_elements = get_zero_terminated_array_attributes(attributes);
 		new_elements = old_elements + 1;
-		attributes = realloc(attributes, (new_elements+1)*sizeof(struct xml_attribute*));
+		{
+			struct xml_attribute** new_attributes = realloc(attributes, (new_elements+1)*sizeof(struct xml_attribute*));
+			if (!new_attributes) {
+				xml_attribute_free(new_attribute);
+				/* Free existing attributes and array so caller can treat as failure */
+				struct xml_attribute** at = attributes;
+				while (*at) {
+					xml_attribute_free(*at);
+					++at;
+				}
+				free(attributes);
+				attributes = NULL;
+				goto cleanup;
+			}
+			attributes = new_attributes;
+		}
 
 		attributes[new_elements-1] = new_attribute;
 		attributes[new_elements] = 0;
@@ -757,6 +772,10 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 
 	original_length = tag_open->length;
 	attributes = xml_find_attributes(parser, tag_open);
+	if (!attributes) {
+		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::attributes");
+		goto exit_failure;
+	}
 
 	/* If tag ends with `/' it's self closing, skip content lookup */
 	if (tag_open->length > 0 && '/' == tag_open->buffer[original_length - 1]) {
@@ -792,7 +811,15 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 		 */
 		size_t old_elements = get_zero_terminated_array_nodes(children);
 		size_t new_elements = old_elements + 1;
-		children = realloc(children, (new_elements + 1) * sizeof(struct xml_node*));
+		{
+			struct xml_node** new_children = realloc(children, (new_elements + 1) * sizeof(struct xml_node*));
+			if (!new_children) {
+				xml_node_free(child);
+				xml_parser_error(parser, NEXT_CHARACTER, "xml_parse_node::children");
+				goto exit_failure;
+			}
+			children = new_children;
+		}
 
 		/* Save child
 		 */
@@ -926,7 +953,13 @@ struct xml_document* xml_open_document(FILE* source) {
 		/* Reallocate buffer
 		 */
 		if (buffer_size - document_length < read_chunk) {
-			buffer = realloc(buffer, buffer_size + 2 * read_chunk);
+			uint8_t* new_buffer = realloc(buffer, buffer_size + 2 * read_chunk);
+			if (!new_buffer) {
+				fclose(source);
+				free(buffer);
+				return 0;
+			}
+			buffer = new_buffer;
 			buffer_size += 2 * read_chunk;
 		}
 

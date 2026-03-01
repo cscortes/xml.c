@@ -70,6 +70,7 @@ This document defines the test categories for the xml.c library, inventories the
 | Test | File | Description | Fixture |
 |------|------|-------------|---------|
 | `test_parse_error_at_end_of_buffer` | unit-c.c | Malformed XML (e.g. `<root>` no closing); expect NULL; run under ASan to ensure no over-read in error path. | SOURCE (in-memory) |
+| `test_realloc_failure_no_leak` | unit-c.c | Mock realloc to return NULL (cmocka `--wrap=realloc` + `will_return_ptr`); parse XML that triggers realloc; expect NULL document and no leak (Valgrind). | SOURCE (in-memory) |
 
 **Suggested tests**
 

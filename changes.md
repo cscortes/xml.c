@@ -4,6 +4,19 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.5.0] — 2025-03-01
+
+### Added
+
+- **realloc-failure test** — `test_realloc_failure_no_leak`: mocks `realloc` via linker `--wrap=realloc` and cmocka `will_return_ptr(__wrap_realloc, NULL)` so the next realloc fails; parses XML that triggers that realloc and asserts NULL document and no leak (Valgrind). Test helper [test/wrap_realloc.c](test/wrap_realloc.c) provides `__wrap_realloc`; test executable links with `LINKER:--wrap=realloc`. Documented in [docs/testable_issues_priority.md](docs/testable_issues_priority.md) §7 and [docs/test_spec.md](docs/test_spec.md) §3.
+- **stderr suppression in error-path tests** — `test_parse_error_at_end_of_buffer` and `test_realloc_failure_no_leak` redirect stderr to `/dev/null` during the parse so expected `xml_parser_error` messages do not appear in the test output and confuse new developers.
+
+### Fixed
+
+- **realloc on failure (leak / lost data)** — All three realloc sites (attributes in `xml_find_attributes`, children in `xml_parse_node`, buffer in `xml_open_document`) now use a temporary and check for NULL; on failure the original pointer is preserved, resources are freed or handed to existing cleanup, and no leak or double-free occurs. Caller of `xml_find_attributes` checks for NULL and jumps to `exit_failure`.
+
+---
+
 ## [0.4.0] — 2025-02-28
 
 ### Added
