@@ -421,6 +421,20 @@ static void test_find_node_by_tag_name(void **state) {
 }
 
 
+/**
+ * Malformed XML that triggers a parse error at end of buffer (e.g. no closing tag).
+ * Expect NULL document. When run under ASan, ensures xml_parser_error does not
+ * read past end of buffer when reporting the error.
+ */
+static void test_parse_error_at_end_of_buffer(void **state) {
+	(void)state;
+	SOURCE(src, "<root>");
+	struct xml_document* doc = xml_parse_document(src, (size_t)strlen((char const*)src));
+	assert_null(doc);
+	free(src);
+}
+
+
 static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_0),
 	cmocka_unit_test(test_xml_parse_document_1),
@@ -433,6 +447,7 @@ static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_attributes_from_file_1),
 	cmocka_unit_test(test_attributes_from_file_2),
 	cmocka_unit_test(test_find_node_by_tag_name),
+	cmocka_unit_test(test_parse_error_at_end_of_buffer),
 };
 
 void get_unit_c_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

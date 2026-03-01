@@ -64,12 +64,12 @@ ctest --test-dir build --output-on-failure -V
 Example output:
 
 ```
-[==========] all: Running 16 test(s).
+[==========] all: Running 17 test(s).
 [ RUN      ] test_xml_parse_document_0
 [       OK ] test_xml_parse_document_0
 [ RUN      ] test_xml_parse_document_1
 ...
-[  PASSED  ] 16 test(s).
+[  PASSED  ] 17 test(s).
 ```
 
 ---

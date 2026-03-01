@@ -4,6 +4,19 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.3.3] — 2025-02-28
+
+### Fixed
+
+- **xml_parser_error buffer over-read** — When reporting a parse error at the end of the buffer, `character` could equal `parser->length`; the code now avoids reading `parser->buffer[character]` in that case (use `'?'` instead) so AddressSanitizer does not report a one-past-end read.
+- **Parser leak on parse failure** — When `xml_parse_node` failed after calling `xml_find_attributes`, the allocated `attributes` array (and its entries) was not freed in the `exit_failure` path; cleanup now frees attributes so Valgrind reports no leaks.
+
+### Added
+
+- **test_parse_error_at_end_of_buffer** — Malformed XML that triggers a parse error at end of buffer (e.g. `<root>` with no closing tag); expects NULL document. Run under ASan to verify no over-read in the error path. Documented in [docs/test_spec.md](docs/test_spec.md) §3.
+
+---
+
 ## [0.3.2] — 2025-02-28
 
 ### Fixed

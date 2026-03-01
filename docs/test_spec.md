@@ -68,13 +68,13 @@ This document defines the test categories for the xml.c library, inventories the
 
 | Test | File | Description | Fixture |
 |------|------|-------------|---------|
-| *(none)* | — | No test for empty buffer, malformed XML, or parse error at end of buffer. | — |
+| `test_parse_error_at_end_of_buffer` | unit-c.c | Malformed XML (e.g. `<root>` no closing); expect NULL; run under ASan to ensure no over-read in error path. | SOURCE (in-memory) |
 
 **Suggested tests**
 
 - `test_parse_empty_buffer` — length 0 (or NULL buffer if allowed); expect NULL document.
 - `test_parse_malformed_returns_null` — e.g. `<root>` with no closing tag, or truncated tag; expect NULL.
-- Optional: `test_parse_error_at_end_of_buffer` — malformed input so error is reported at the last byte; run under ASan to ensure no over-read in the error path.
+- ~~Optional: `test_parse_error_at_end_of_buffer`~~ — **implemented**: malformed input so error is reported at the last byte; run under ASan to ensure no over-read in the error path.
 
 ---
 

@@ -335,8 +335,10 @@ static void xml_parser_error(struct xml_parser* parser, enum xml_parser_offset o
 	}
 
 	if (NO_CHARACTER != offset) {
+		/* character may be parser->length (end of buffer); avoid one-past-end read */
+		uint8_t ch = (character < parser->length) ? parser->buffer[character] : (uint8_t)'?';
 		fprintf(stderr,	"xml_parser_error at %i:%i (is %c): %s\n",
-				row + 1, column, parser->buffer[character], message
+				row + 1, column, (char)ch, message
 		);
 	} else {
 		fprintf(stderr,	"xml_parser_error at %i:%i: %s\n",
@@ -739,7 +741,7 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	struct xml_string* content = 0;
 
 	size_t original_length;
-	struct xml_attribute** attributes;
+	struct xml_attribute** attributes = 0;
 
 	struct xml_node** children = calloc(1, sizeof(struct xml_node*));
 	children[0] = 0;
@@ -840,6 +842,14 @@ exit_failure:
 	}
 	if (content) {
 		xml_string_free(content);
+	}
+	if (attributes) {
+		struct xml_attribute** at = attributes;
+		while (*at) {
+			xml_attribute_free(*at);
+			++at;
+		}
+		free(attributes);
 	}
 
 	struct xml_node** it = children;
