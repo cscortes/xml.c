@@ -33,10 +33,10 @@ Features we could add to improve alignment with XML 1.0 (well-formedness and com
 
 | Priority | Status | Feature | Implementation difficulty (1–5) | Useful (1–5) | Description |
 |----------|--------|---------|--------------------------------|--------------|-------------|
-| High | Not started | **Entity references in content and attributes** | 2 | 5 | Expand the five predefined entities in text and attribute values: `&amp;` `&lt;` `&gt;` `&quot;` `&apos;`. Without this, documents that use `&` or `<` in content are not well-formed per XML. |
-| High | Not started | **Character references** | 2 | 5 | Expand decimal `&#N;` and hexadecimal `&#xN;` character references in element and attribute content. |
+| High | **Done** | **Entity references in content and attributes** | 2 | 5 | Expand the five predefined entities in text and attribute values: `&amp;` `&lt;` `&gt;` `&quot;` `&apos;`. Implemented in 0.12.0; expanded during parse in content and attributes. |
+| High | **Done** | **Character references** | 2 | 5 | Expand decimal `&#N;` and hexadecimal `&#xN;` character references in element and attribute content. Implemented in 0.12.0; expanded to UTF-8 during parse. |
 | Medium | Done | **Stricter tag names (Name production)** | 1 | 2 | Reject or constrain tag names to the XML Name production (e.g. start with letter, `_`, or `:`; then Name characters). Currently the parser accepts any characters until `>` or space (e.g. `<2tag>`). |
-| Medium | Not started | **Unique attribute names per element** | 1 | 3 | Reject duplicate attribute names on the same element (required by XML well-formedness). |
+| Medium | Done | **Unique attribute names per element** | 1 | 3 | Reject duplicate attribute names on the same element (required by XML well-formedness). Implemented in 0.11.0. |
 | Medium | Not started | **Reject standalone `&` in content** | 2 | 4 | Treat unescaped `&` in text or attribute values as an error (or require entity/character reference form). |
 | Lower | Not started | **Namespace support** | 4 | 4 | Parse and expose namespace declarations (`xmlns`, `xmlns:prefix`) and optionally resolve prefixed names; no full Namespaces in XML required. |
 | Lower | Not started | **DOCTYPE / DTD handling** | 4 | 3 | Skip or optionally parse `<!DOCTYPE ...>`; if parsing, could support internal subset and predefined entities only (no external entities). |
