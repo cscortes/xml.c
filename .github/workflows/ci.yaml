@@ -2,11 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, main]
   pull_request:
-    branches: [master]
+    branches: [master, main]
   schedule:
     - cron: '0 0 15 * *'
+  workflow_dispatch:  # Run manually from Actions tab
 
 env:
   CTEST_OUTPUT_ON_FAILURE: 1
