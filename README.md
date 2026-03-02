@@ -67,7 +67,6 @@ Currently required to build:
 - No C++ compiler is required; the test suite is C-only.
 
 **Broader audience (direction):** We want to reach more developers. Planned steps include:
-- **Plain Makefile** — so you can build with just `make` and a C compiler, without CMake.
 - **ANSI C (C89/C90)** — so the library builds on older compilers and embedded toolchains. The codebase is currently C11; moving to ANSI C is a goal for this modernization project.
 - **C-only test suite** — the project uses [cmocka](https://cmocka.org/) for unit tests (see `test/unit-c.c`). CMake fetches and builds cmocka at a fixed version; no system install or C++ compiler is required.
 
