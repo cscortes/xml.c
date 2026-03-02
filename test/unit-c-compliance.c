@@ -33,6 +33,8 @@
  * Tests for XML compliance candidates (docs/issues.md):
  * - Stricter tag names (Name production)
  * - Unique attribute names per element
+ * - Reject standalone `&` in content and attributes
+ * - Namespace support (expose xmlns, xmlns:prefix as attributes)
  *
  * Some tests expect the parser to reject invalid input (assert_null(document)).
  */
@@ -274,6 +276,167 @@ static void test_single_attribute_accepted(void **state) {
 }
 
 
+/* =============================================================================
+ * Reject standalone `&` in content and attributes
+ * docs/issues.md: "Treat unescaped `&` in text or attribute values as an error
+ * (or require entity/character reference form)."
+ * ============================================================================= */
+
+/**
+ * Standalone `&` in element content must be rejected (not followed by entity/char ref).
+ */
+static void test_reject_standalone_ampersand_in_content(void **state) {
+	(void)state;
+	SOURCE(source, "<root>foo & bar</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document)
+		xml_document_free(document, true);
+	else
+		free(source);
+	assert_null(document);
+}
+
+
+/**
+ * Standalone `&` at end of content must be rejected.
+ */
+static void test_reject_ampersand_at_end_of_content(void **state) {
+	(void)state;
+	SOURCE(source, "<root>x&</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document)
+		xml_document_free(document, true);
+	else
+		free(source);
+	assert_null(document);
+}
+
+
+/**
+ * Invalid entity reference (not one of predefined/char ref) in content must be rejected.
+ */
+static void test_reject_invalid_entity_in_content(void **state) {
+	(void)state;
+	SOURCE(source, "<root>&unknown;</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document)
+		xml_document_free(document, true);
+	else
+		free(source);
+	assert_null(document);
+}
+
+
+/**
+ * Standalone `&` in attribute value must be rejected.
+ */
+static void test_reject_standalone_ampersand_in_attribute(void **state) {
+	(void)state;
+	SOURCE(source, "<e a=\"foo & bar\">x</e>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document)
+		xml_document_free(document, true);
+	else
+		free(source);
+	assert_null(document);
+}
+
+
+/**
+ * Valid use of `&` via &amp; in content must still parse.
+ */
+static void test_accept_amp_entity_in_content(void **state) {
+	(void)state;
+	SOURCE(source, "<root>a&amp;b</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_true(string_equals(xml_node_content(root), "a&b"));
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
+/* =============================================================================
+ * Namespace support
+ * docs/issues.md: "Parse and expose namespace declarations (xmlns, xmlns:prefix)
+ * and optionally resolve prefixed names."
+ * ============================================================================= */
+
+/**
+ * Default namespace xmlns="..." should parse and be exposed as an attribute.
+ */
+static void test_namespace_default_xmlns_exposed(void **state) {
+	(void)state;
+	SOURCE(source, "<root xmlns=\"http://example.com\">x</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_int_equal(xml_node_attributes(root), 1);
+		assert_true(string_equals(xml_node_attribute_name(root, 0), "xmlns"));
+		assert_true(string_equals(xml_node_attribute_content(root, 0), "http://example.com"));
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
+/**
+ * Prefixed namespace xmlns:prefix="..." should parse and be exposed as an attribute.
+ */
+static void test_namespace_prefixed_xmlns_exposed(void **state) {
+	(void)state;
+	SOURCE(source, "<root xmlns:pre=\"http://example.com/ns\">x</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_int_equal(xml_node_attributes(root), 1);
+		assert_true(string_equals(xml_node_attribute_name(root, 0), "xmlns:pre"));
+		assert_true(string_equals(xml_node_attribute_content(root, 0), "http://example.com/ns"));
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
+/**
+ * Both default and prefixed xmlns on same element.
+ */
+static void test_namespace_default_and_prefixed_exposed(void **state) {
+	(void)state;
+	SOURCE(source, "<root xmlns=\"http://default\" xmlns:pre=\"http://pre\">x</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_int_equal(xml_node_attributes(root), 2);
+		/* Order may vary; check both names and values. */
+		bool has_default = false;
+		bool has_pre = false;
+		for (size_t i = 0; i < 2; i++) {
+			if (string_equals(xml_node_attribute_name(root, i), "xmlns")
+			    && string_equals(xml_node_attribute_content(root, i), "http://default"))
+				has_default = true;
+			if (string_equals(xml_node_attribute_name(root, i), "xmlns:pre")
+			    && string_equals(xml_node_attribute_content(root, i), "http://pre"))
+				has_pre = true;
+		}
+		assert_true(has_default);
+		assert_true(has_pre);
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	/* Stricter tag names (Name production) */
 	cmocka_unit_test(test_tag_name_reject_starts_with_digit),
@@ -288,6 +451,16 @@ static void test_single_attribute_accepted(void **state) {
 	cmocka_unit_test(test_duplicate_attribute_three_times_rejected),
 	cmocka_unit_test(test_unique_attributes_accepted),
 	cmocka_unit_test(test_single_attribute_accepted),
+	/* Reject standalone & in content and attributes */
+	cmocka_unit_test(test_reject_standalone_ampersand_in_content),
+	cmocka_unit_test(test_reject_ampersand_at_end_of_content),
+	cmocka_unit_test(test_reject_invalid_entity_in_content),
+	cmocka_unit_test(test_reject_standalone_ampersand_in_attribute),
+	cmocka_unit_test(test_accept_amp_entity_in_content),
+	/* Namespace support (expose xmlns, xmlns:prefix) */
+	cmocka_unit_test(test_namespace_default_xmlns_exposed),
+	cmocka_unit_test(test_namespace_prefixed_xmlns_exposed),
+	cmocka_unit_test(test_namespace_default_and_prefixed_exposed),
 };
 
 void get_unit_c_compliance_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

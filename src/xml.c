@@ -682,6 +682,8 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 			uint8_t* expanded = expand_entity_refs((uint8_t const*)start_content, content_len, &expanded_len);
 			if (!expanded) {
 				xml_parser_error(parser, NO_CHARACTER, "xml_find_attributes::invalid entity in attribute value");
+				new_attribute->content->buffer = NULL;
+				new_attribute->content->buffer_owned = false;
 				xml_attribute_free(new_attribute);
 				goto cleanup_attributes;
 			}

@@ -4,6 +4,18 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.12.1] — 2026-03-01
+
+### Added
+
+- **Compliance tests: standalone `&` and namespaces** — Tests for rejecting unescaped `&` in text and attribute values (docs/issues.md “Reject standalone `&` in content”) and for exposing `xmlns` / `xmlns:prefix` as attributes (namespace support candidate). See [test/unit-c-compliance.c](test/unit-c-compliance.c).
+
+### Fixed
+
+- **Parser cleanup on attribute entity error** — When entity/character reference expansion fails in an attribute value, the attribute’s content string is now initialized before free so that cleanup does not free uninitialized memory (avoids invalid free and Valgrind errors).
+
+---
+
 ## [0.12.0] — 2026-03-01
 
 ### Added
