@@ -573,6 +573,8 @@ static bool xml_validate_tag_name(struct xml_parser* parser, struct xml_string* 
  * @author Blake Felt
  * @see https://github.com/Molorius
  */
+static uint8_t* expand_entity_refs(uint8_t const* in, size_t in_len, size_t* out_len);
+
 static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, struct xml_string* tag_open) {
 	xml_parser_info(parser, "find_attributes");
 	char* tmp;
@@ -670,9 +672,23 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 		new_attribute->name->buffer = (unsigned char*)start_name;
 		new_attribute->name->length = name_len;
 		new_attribute->name->buffer_owned = false;
-		new_attribute->content->buffer = (unsigned char*)start_content;
-		new_attribute->content->length = content_len;
-		new_attribute->content->buffer_owned = false;
+		/* Expand entity and character references in attribute value (docs/issues.md). */
+		if (content_len == 0) {
+			new_attribute->content->buffer = NULL;
+			new_attribute->content->length = 0;
+			new_attribute->content->buffer_owned = false;
+		} else {
+			size_t expanded_len = 0;
+			uint8_t* expanded = expand_entity_refs((uint8_t const*)start_content, content_len, &expanded_len);
+			if (!expanded) {
+				xml_parser_error(parser, NO_CHARACTER, "xml_find_attributes::invalid entity in attribute value");
+				xml_attribute_free(new_attribute);
+				goto cleanup_attributes;
+			}
+			new_attribute->content->buffer = expanded;
+			new_attribute->content->length = expanded_len;
+			new_attribute->content->buffer_owned = true;
+		}
 
 		old_elements = get_zero_terminated_array_attributes(attributes);
 		/* Reject duplicate attribute names on the same element (XML well-formedness). */
@@ -868,6 +884,157 @@ static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
 /**
  * [PRIVATE]
  *
+ * UTF-8 byte length for a Unicode code point (1-4 bytes). Returns 0 if invalid.
+ */
+static size_t utf8_code_point_length(unsigned long cp) {
+	if (cp <= 0x7F)
+		return 1;
+	if (cp <= 0x7FF)
+		return 2;
+	if (cp <= 0xFFFF && (cp < 0xD800 || cp > 0xDFFF)) /* exclude surrogates */
+		return 3;
+	if (cp <= 0x10FFFF)
+		return 4;
+	return 0;
+}
+
+
+/**
+ * [PRIVATE]
+ *
+ * Encode code point cp as UTF-8 into buf; buf must have at least utf8_code_point_length(cp) bytes.
+ * Returns number of bytes written.
+ */
+static size_t utf8_encode(unsigned long cp, uint8_t* buf) {
+	if (cp <= 0x7F) {
+		buf[0] = (uint8_t)cp;
+		return 1;
+	}
+	if (cp <= 0x7FF) {
+		buf[0] = (uint8_t)(0xC0 | (cp >> 6));
+		buf[1] = (uint8_t)(0x80 | (cp & 0x3F));
+		return 2;
+	}
+	if (cp <= 0xFFFF) {
+		buf[0] = (uint8_t)(0xE0 | (cp >> 12));
+		buf[1] = (uint8_t)(0x80 | ((cp >> 6) & 0x3F));
+		buf[2] = (uint8_t)(0x80 | (cp & 0x3F));
+		return 3;
+	}
+	if (cp <= 0x10FFFF) {
+		buf[0] = (uint8_t)(0xF0 | (cp >> 18));
+		buf[1] = (uint8_t)(0x80 | ((cp >> 12) & 0x3F));
+		buf[2] = (uint8_t)(0x80 | ((cp >> 6) & 0x3F));
+		buf[3] = (uint8_t)(0x80 | (cp & 0x3F));
+		return 4;
+	}
+	return 0;
+}
+
+
+/**
+ * [PRIVATE]
+ *
+ * Expand XML predefined entities and character references in a buffer.
+ * (docs/issues.md: entity references in content and attributes, character references.)
+ *
+ * Replaces: &amp; &lt; &gt; &quot; &apos; and &#N; &#xN; (decimal/hex).
+ * Returns a newly allocated buffer and sets *out_len; caller must free the buffer.
+ * Returns NULL on invalid entity or allocation failure.
+ */
+static uint8_t* expand_entity_refs(uint8_t const* in, size_t in_len, size_t* out_len) {
+	size_t out_cap = 0;
+	size_t i = 0;
+
+	/* First pass: compute output length */
+	while (i < in_len) {
+		if (in[i] == '&') {
+			if (i + 1 >= in_len) return NULL;
+			if (in[i + 1] == '#') {
+				/* Character reference: &#N; or &#xN; */
+				size_t j = i + 2;
+				int hex = 0;
+				if (j < in_len && (in[j] == 'x' || in[j] == 'X')) {
+					j++;
+					hex = 1;
+				}
+				if (j >= in_len || !(hex ? isxdigit((unsigned char)in[j]) : isdigit((unsigned char)in[j])))
+					return NULL;
+				unsigned long val = 0;
+				while (j < in_len) {
+					uint8_t c = in[j];
+					if (c == ';') break;
+					if (hex) {
+						if (!isxdigit((unsigned char)c)) return NULL;
+						val = val * 16 + (unsigned long)(c <= '9' ? c - '0' : (c >= 'a' ? c - 'a' + 10 : c - 'A' + 10));
+					} else {
+						if (!isdigit((unsigned char)c)) return NULL;
+						val = val * 10 + (unsigned long)(c - '0');
+					}
+					j++;
+					if (val > 0x10FFFF) return NULL;
+				}
+				if (j >= in_len || in[j] != ';') return NULL;
+				size_t u8len = utf8_code_point_length(val);
+				if (u8len == 0) return NULL;
+				out_cap += u8len;
+				i = j + 1;
+				continue;
+			}
+			/* Predefined entity (check length before memcmp to avoid reading past buffer) */
+			if (i + 5 <= in_len && memcmp(&in[i], "&amp;", 5) == 0) { out_cap += 1; i += 5; continue; }
+			if (i + 4 <= in_len && memcmp(&in[i], "&lt;", 4) == 0)  { out_cap += 1; i += 4; continue; }
+			if (i + 4 <= in_len && memcmp(&in[i], "&gt;", 4) == 0)  { out_cap += 1; i += 4; continue; }
+			if (i + 6 <= in_len && memcmp(&in[i], "&quot;", 6) == 0) { out_cap += 1; i += 6; continue; }
+			if (i + 6 <= in_len && memcmp(&in[i], "&apos;", 6) == 0) { out_cap += 1; i += 6; continue; }
+			return NULL; /* unknown or truncated entity */
+		}
+		out_cap++;
+		i++;
+	}
+
+	uint8_t* out = malloc(out_cap);
+	if (!out) return NULL;
+	*out_len = out_cap;
+
+	i = 0;
+	size_t o = 0;
+	while (i < in_len) {
+		if (in[i] == '&') {
+			if (i + 1 < in_len && in[i + 1] == '#') {
+				size_t j = i + 2;
+				int hex = 0;
+				if (j < in_len && (in[j] == 'x' || in[j] == 'X')) { j++; hex = 1; }
+				unsigned long val = 0;
+				while (j < in_len && in[j] != ';') {
+					uint8_t c = in[j++];
+					if (hex)
+						val = val * 16 + (unsigned long)(c <= '9' ? c - '0' : (c >= 'a' ? c - 'a' + 10 : c - 'A' + 10));
+					else
+						val = val * 10 + (unsigned long)(c - '0');
+				}
+				j++; /* skip ';' */
+				o += utf8_encode(val, &out[o]);
+				i = j;
+				continue;
+			}
+			if (i + 5 <= in_len && memcmp(&in[i], "&amp;", 5) == 0) { out[o++] = '&';  i += 5; continue; }
+			if (i + 4 <= in_len && memcmp(&in[i], "&lt;", 4) == 0)  { out[o++] = '<';  i += 4; continue; }
+			if (i + 4 <= in_len && memcmp(&in[i], "&gt;", 4) == 0)  { out[o++] = '>';  i += 4; continue; }
+			if (i + 6 <= in_len && memcmp(&in[i], "&quot;", 6) == 0) { out[o++] = '"';  i += 6; continue; }
+			if (i + 6 <= in_len && memcmp(&in[i], "&apos;", 6) == 0) { out[o++] = '\''; i += 6; continue; }
+			free(out);
+			return NULL;
+		}
+		out[o++] = in[i++];
+	}
+	return out;
+}
+
+
+/**
+ * [PRIVATE]
+ *
  * Parses a tag's content
  *
  * \code
@@ -914,12 +1081,29 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 		length--;
 	}
 
-	/* Return text
-	 */
+	/* Expand entity and character references (docs/issues.md). */
+	if (length == 0) {
+		struct xml_string* content = malloc(sizeof(struct xml_string));
+		if (!content) return 0;
+		content->buffer = &parser->buffer[start];
+		content->length = 0;
+		content->buffer_owned = false;
+		return content;
+	}
+	size_t expanded_len = 0;
+	uint8_t* expanded = expand_entity_refs(&parser->buffer[start], length, &expanded_len);
+	if (!expanded) {
+		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_content::invalid entity or character reference");
+		return 0;
+	}
 	struct xml_string* content = malloc(sizeof(struct xml_string));
-	content->buffer = &parser->buffer[start];
-	content->length = length;
-	content->buffer_owned = false;
+	if (!content) {
+		free(expanded);
+		return 0;
+	}
+	content->buffer = expanded;
+	content->length = expanded_len;
+	content->buffer_owned = true;
 	return content;
 }
 
@@ -1087,7 +1271,10 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 				xml_parser_error(parser, 0, "xml_parse_node::content");
 				goto exit_failure;
 			}
-			{
+			if (!content) {
+				/* Single segment: use text directly so we keep ownership of its buffer. */
+				content = text;
+			} else {
 				size_t text_len = text->length;
 				content = content_append(parser, content, text->buffer, text_len);
 				xml_string_free(text);

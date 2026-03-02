@@ -4,6 +4,20 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.12.0] — 2026-03-01
+
+### Added
+
+- **Entity and character reference expansion** — Parser expands the five predefined entities (`&amp;` `&lt;` `&gt;` `&quot;` `&apos;`) and decimal/hex character references (`&#N;` / `&#xN;`) in element text and attribute values. Expansion runs during parse; `xml_node_content` and `xml_node_attribute_content` return UTF-8 with refs already expanded. Invalid refs cause parse failure. See [docs/issues.md](docs/issues.md) (XML compliance candidates).
+- **Entity/character reference tests** — New [test/unit-c-entities.c](test/unit-c-entities.c) with 16 tests for predefined entities and character refs in content and attributes; wired into the C test runner and CMake.
+
+### Changed
+
+- **UTF-8 documented** — README, [src/xml.h](src/xml.h), [docs/xml_api.md](docs/xml_api.md), [docs/test_spec.md](docs/test_spec.md), [docs/quick_start.md](docs/quick_start.md), and [docs/issues.md](docs/issues.md) now state that the library assumes UTF-8 for all input and string data; no conversion or validation.
+- **XML compliance table** — README reports **Yes** for entity references and character references (expanded in content and attributes).
+
+---
+
 ## [0.11.0] — 2026-03-01
 
 ### Added

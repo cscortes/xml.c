@@ -87,6 +87,8 @@ If the executable was placed in a subdirectory (e.g. `build/example/`), run:
 
 You should see output like: `Hello World` and a line about `Root/This` children.
 
+**Input format:** The library assumes all input (in-memory buffers and files) is **UTF-8**. See [README](../README.md) for the XML compliance table and encoding note.
+
 ---
 
 ## One-liner (after prerequisites)

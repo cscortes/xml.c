@@ -24,3 +24,21 @@ Fixes and features tracked from [ooxi/xml.c](https://github.com/ooxi/xml.c) issu
 | **Current (beyond original)** | #30 | Processing instructions `<?...?>` | Parser skips `<?xml ...?>` and other PIs before tags and between nodes. |
 | **Current (beyond original)** | #40 | CDATA sections `<![CDATA[...]]>` | Parser recognizes `<![CDATA[...]]>` and exposes content as character data (no markup/entity interpretation). |
 | **Current (beyond original)** | #25 | Easier text printing / helpers | Zero-terminated C-string copy helpers for node and attribute text (`xml_node_name_c_string`, `xml_node_content_c_string`, `xml_node_attribute_name_c_string`, `xml_node_attribute_content_c_string`); compare helpers `xml_string_equals` and `xml_string_equals_cstr`. |
+
+---
+
+## XML compliance: candidate features
+
+Features we could add to improve alignment with XML 1.0 (well-formedness and common practice). See README "XML compliance" for current status. **Implementation difficulty:** 1 = easy, 5 = hardest to implement. **Useful:** 1 = not needed, 5 = necessary.
+
+| Priority | Status | Feature | Implementation difficulty (1–5) | Useful (1–5) | Description |
+|----------|--------|---------|--------------------------------|--------------|-------------|
+| High | Not started | **Entity references in content and attributes** | 2 | 5 | Expand the five predefined entities in text and attribute values: `&amp;` `&lt;` `&gt;` `&quot;` `&apos;`. Without this, documents that use `&` or `<` in content are not well-formed per XML. |
+| High | Not started | **Character references** | 2 | 5 | Expand decimal `&#N;` and hexadecimal `&#xN;` character references in element and attribute content. |
+| Medium | Done | **Stricter tag names (Name production)** | 1 | 2 | Reject or constrain tag names to the XML Name production (e.g. start with letter, `_`, or `:`; then Name characters). Currently the parser accepts any characters until `>` or space (e.g. `<2tag>`). |
+| Medium | Not started | **Unique attribute names per element** | 1 | 3 | Reject duplicate attribute names on the same element (required by XML well-formedness). |
+| Medium | Not started | **Reject standalone `&` in content** | 2 | 4 | Treat unescaped `&` in text or attribute values as an error (or require entity/character reference form). |
+| Lower | Not started | **Namespace support** | 4 | 4 | Parse and expose namespace declarations (`xmlns`, `xmlns:prefix`) and optionally resolve prefixed names; no full Namespaces in XML required. |
+| Lower | Not started | **DOCTYPE / DTD handling** | 4 | 3 | Skip or optionally parse `<!DOCTYPE ...>`; if parsing, could support internal subset and predefined entities only (no external entities). |
+| Lower | Not started | **Encoding declaration** | 2 | 3 | Honor `encoding` in `<?xml ...?>` for rejection of unsupported encodings or future conversion. **UTF-8 is the only assumed/supported encoding**; input and all string data are treated as UTF-8. |
+| Lower | Not started | **XML 1.1** | 3 | 2 | Optional support for XML 1.1 name and character rules (e.g. NEL, control chars) if targeting 1.1. |

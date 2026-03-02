@@ -67,4 +67,13 @@ void get_unit_c_cdata_tests(const struct CMUnitTest** out_tests, size_t* out_cou
  */
 void get_unit_c_compliance_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
+/**
+ * Get the entity and character reference test array from unit-c-entities.c
+ * (predefined entities &amp; &lt; &gt; &quot; &apos;, decimal &#N;, hex &#xN;).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_entities_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
 #endif

@@ -5,9 +5,11 @@
 - Easy to embed in other projects without large external dependencies.
 - See **XML compliance** below for what is supported and what is not.
 
+**Encoding:** The library assumes **UTF-8** for all input and output. The parse buffer, tag names, text content, and attribute values are treated as UTF-8 byte sequences. Character references (`&#N;` / `&#xN;`) are expanded to UTF-8. No encoding conversion or validation is performed; the `encoding` attribute in `<?xml ...?>` is ignored.
+
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.11.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.12.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -123,20 +125,20 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 | **Attributes** | | |
 | `name="value"` or `name='value'` | Required | **Yes** |
 | Unique attribute names per element | Required | **Yes** — duplicates rejected |
-| Entity/character refs in values | Allowed, must be expanded | **No** — not expanded |
+| Entity/character refs in values | Allowed, must be expanded | **Yes** — predefined entities and decimal/hex character refs expanded |
 | **Content** | | |
 | Text content | Allowed | **Yes** |
-| Character references `&#N;` / `&#xN;` | Required to be expanded | **No** — not supported |
-| Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **No** — raw `&` accepted (invalid per XML) |
+| Character references `&#N;` / `&#xN;` | Required to be expanded | **Yes** — expanded to UTF-8 in content and attributes |
+| Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **Yes** — five predefined entities expanded in content and attributes |
 | CDATA sections `<![CDATA[...]]>` | Allowed | **Yes** — parsed and exposed as character data |
 | **Other** | | |
 | Comments `<!-- ... -->` | Allowed | **Yes** — skipped before tags and between nodes |
 | Processing instructions `<?...?>` | Allowed | **Yes** — skipped (including `<?xml ...?>`) |
 | DTD / DOCTYPE | Optional | **No** — not supported |
 | Namespaces | Common practice (Namespaces in XML) | **No** — no namespace handling |
-| Encoding declaration / conversion | Declared and applied | **No** — no conversion; input treated as raw bytes |
+| Encoding declaration / conversion | Declared and applied | **No** — no conversion; **UTF-8 is assumed** for input and all string data (no validation) |
 
-**Summary:** Use xml.c only for controlled, simple XML-like input (elements, attributes, text). For standards-compliant or arbitrary XML, use a full parser (e.g. libxml2, Expat).
+**Summary:** Use xml.c only for controlled, simple XML-like input (elements, attributes, text). Input must be UTF-8 (or ASCII); other encodings are not supported. For standards-compliant or arbitrary XML, use a full parser (e.g. libxml2, Expat).
 
 
 ## Usage

@@ -11,8 +11,8 @@ Generated from Doxygen comments in `src/xml.h`. Regenerate with:
 
 Tries to parse the XML fragment in buffer
 
-- **buffer** — Chunk to parse
-- **length** — Size of the buffer
+- **buffer** — Chunk to parse (UTF-8; no conversion or validation)
+- **length** — Size of the buffer in bytes
 
 **Warning:** buffer will be referenced by the document, you may not free it until you free the xml_document
 
@@ -27,7 +27,7 @@ Tries to parse the XML fragment in buffer
 
 Tries to read an XML document from disk
 
-- **source** — File that will be read into an xml document. Will be closed
+- **source** — File that will be read into an xml document. Will be closed. File content is assumed to be UTF-8.
 
 **Warning:** You have to call xml_document_free with free_buffer = true after you finished using the document
 

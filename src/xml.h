@@ -30,6 +30,11 @@
  * This header is self-contained: it includes <stdbool.h>, <stdint.h>, <stdio.h>,
  * and <string.h>. You need only #include <xml.h> to use the API (uint8_t, size_t,
  * bool, FILE, and the declared functions).
+ *
+ * Encoding: The library assumes UTF-8 for all input and output. Buffers passed to
+ * xml_parse_document, and all tag names, text content, and attribute values exposed
+ * via the API, are UTF-8 byte sequences. Character references are expanded to UTF-8.
+ * No encoding conversion or validation is performed.
  */
 #include <stdbool.h>
 #include <stdint.h>
@@ -48,7 +53,8 @@ struct xml_node;
 struct xml_attribute;
 
 /**
- * Internal character sequence representation
+ * Internal character sequence representation (UTF-8).
+ * See the header "Encoding" note: all string data is assumed to be UTF-8.
  */
 struct xml_string;
 
@@ -57,8 +63,8 @@ struct xml_string;
 /**
  * Tries to parse the XML fragment in buffer
  *
- * @param buffer Chunk to parse
- * @param length Size of the buffer
+ * @param buffer Chunk to parse (UTF-8; no conversion or validation)
+ * @param length Size of the buffer in bytes
  *
  * @warning `buffer` will be referenced by the document, you may not free it
  *     until you free the xml_document
@@ -74,7 +80,8 @@ struct xml_document* xml_parse_document(uint8_t* buffer, size_t length);
 /**
  * Tries to read an XML document from disk
  *
- * @param source File that will be read into an xml document. Will be closed
+ * @param source File that will be read into an xml document. Will be closed.
+ *     File content is assumed to be UTF-8.
  *
  * @warning You have to call xml_document_free with free_buffer = true after you
  *     finished using the document
