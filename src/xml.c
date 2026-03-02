@@ -161,11 +161,10 @@ enum xml_parser_offset {
  * @return Number of attributes in 0-terminated array
  */
 static size_t get_zero_terminated_array_attributes(struct xml_attribute** attributes) {
-	size_t elements = 0;
+	size_t elements;
 
-	while (attributes[elements]) {
-		++elements;
-	}
+	for (elements = 0; attributes[elements]; ++elements)
+		;
 
 	return elements;
 }
@@ -177,11 +176,10 @@ static size_t get_zero_terminated_array_attributes(struct xml_attribute** attrib
  * @return Number of nodes in 0-terminated array
  */
 static size_t get_zero_terminated_array_nodes(struct xml_node** nodes) {
-	size_t elements = 0;
+	size_t elements;
 
-	while (nodes[elements]) {
-		++elements;
-	}
+	for (elements = 0; nodes[elements]; ++elements)
+		;
 
 	return elements;
 }
@@ -192,10 +190,13 @@ static size_t get_zero_terminated_array_nodes(struct xml_node** nodes) {
  */
 static uint8_t* xml_string_clone(struct xml_string* s) {
 	if (!s) {
-		return 0;
+		return NULL;
 	}
 
 	uint8_t* clone = calloc(s->length + 1, sizeof(uint8_t));
+	if (!clone) {
+		return NULL;
+	}
 
 	xml_string_copy(s, clone, s->length);
 	clone[s->length] = 0;

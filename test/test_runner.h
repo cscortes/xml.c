@@ -121,4 +121,13 @@ void get_unit_c_doctype_tests(const struct CMUnitTest** out_tests, size_t* out_c
  */
 void get_unit_c_encoding_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
+/**
+ * Get the xml_string_clone test array from unit-c-string-clone.c
+ * (_c_string API returns cloned, null-terminated buffers; caller owns and frees).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_string_clone_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
 #endif

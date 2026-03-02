@@ -4,6 +4,22 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.14.1] — 2026-03-01
+
+### Added
+
+- **Tests for xml_string_clone behaviour** — New [test/unit-c-string-clone.c](test/unit-c-string-clone.c) exercises the clone logic via the public `*_c_string` API: null-terminated copies, caller-owned buffers, attribute name/content clones, empty attribute value, and NULL node returning NULL. Wired into the C test runner and CMake.
+
+### Fixed
+
+- **xml_string_clone** — Return `NULL` (not `0`) for null input and when `calloc` fails; check `calloc` result to avoid undefined behaviour on allocation failure.
+
+### Changed
+
+- **Minor refactors in src/xml.c** — `get_zero_terminated_array_attributes` and `get_zero_terminated_array_nodes` rewritten from `while` to `for` loops.
+
+---
+
 ## [0.14.0] — 2026-03-01
 
 ### Added

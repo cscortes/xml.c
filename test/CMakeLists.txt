@@ -33,6 +33,7 @@ add_executable(
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-namespace.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-null.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-pi.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-string-clone.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-unique-attributes.c"
 	"${CMAKE_CURRENT_LIST_DIR}/wrap_realloc.c"
 )

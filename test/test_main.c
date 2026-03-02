@@ -38,7 +38,8 @@ int main(void) {
 	const struct CMUnitTest* t9;
 	const struct CMUnitTest* t10;
 	const struct CMUnitTest* t11;
-	size_t n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11;
+	const struct CMUnitTest* t12;
+	size_t n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12;
 
 	get_unit_c_tests(&t1, &n1);
 	get_unit_c_null_tests(&t2, &n2);
@@ -51,8 +52,9 @@ int main(void) {
 	get_unit_c_entities_tests(&t9, &n9);
 	get_unit_c_doctype_tests(&t10, &n10);
 	get_unit_c_encoding_tests(&t11, &n11);
+	get_unit_c_string_clone_tests(&t12, &n12);
 
-	size_t total = n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + n10 + n11;
+	size_t total = n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + n10 + n11 + n12;
 	struct CMUnitTest* all = malloc(total * sizeof(struct CMUnitTest));
 	if (!all) {
 		return 1;
@@ -68,6 +70,7 @@ int main(void) {
 	memcpy(all + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8, t9, n9 * sizeof(struct CMUnitTest));
 	memcpy(all + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9, t10, n10 * sizeof(struct CMUnitTest));
 	memcpy(all + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + n10, t11, n11 * sizeof(struct CMUnitTest));
+	memcpy(all + n1 + n2 + n3 + n4 + n5 + n6 + n7 + n8 + n9 + n10 + n11, t12, n12 * sizeof(struct CMUnitTest));
 
 	/* Use internal API with explicit count; the macro uses sizeof(array) which is wrong for a pointer. */
 	int ret = _cmocka_run_group_tests("all", all, total, NULL, NULL);
