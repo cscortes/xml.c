@@ -59,13 +59,40 @@ void get_unit_c_pi_tests(const struct CMUnitTest** out_tests, size_t* out_count)
 void get_unit_c_cdata_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
 /**
- * Get the XML compliance test array from unit-c-compliance.c
- * (stricter tag names / Name production, unique attribute names per element).
+ * Get the tag name / Name production test array from unit-c-name-production.c
+ * (stricter tag names: reject digit-start, accept letter/underscore/colon).
  *
  * @param out_tests On success, set to pointer to the test array
  * @param out_count On success, set to the number of tests
  */
-void get_unit_c_compliance_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+void get_unit_c_name_production_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
+/**
+ * Get the unique attribute names test array from unit-c-unique-attributes.c
+ * (reject duplicate attribute names per element).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_unique_attributes_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
+/**
+ * Get the standalone-ampersand rejection test array from unit-c-ampersand-reject.c
+ * (reject unescaped & in content and attributes).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_ampersand_reject_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
+/**
+ * Get the namespace support test array from unit-c-namespace.c
+ * (xmlns and xmlns:prefix exposed as attributes).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_namespace_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
 /**
  * Get the entity and character reference test array from unit-c-entities.c
@@ -75,5 +102,23 @@ void get_unit_c_compliance_tests(const struct CMUnitTest** out_tests, size_t* ou
  * @param out_count On success, set to the number of tests
  */
 void get_unit_c_entities_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
+/**
+ * Get the DOCTYPE/DTD test array from unit-c-doctype.c
+ * (skip or parse <!DOCTYPE ...>; internal subset, no external entities).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_doctype_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
+/**
+ * Get the encoding declaration test array from unit-c-encoding.c
+ * (honor encoding in <?xml ...?>; reject unsupported encodings; UTF-8 only).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_encoding_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
 #endif

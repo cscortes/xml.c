@@ -4,11 +4,19 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.12.2] — 2026-03-01
+
+### Changed
+
+- **Per-feature test files** — Each feature now has its own test module. Split former `unit-c-compliance.c` into [test/unit-c-name-production.c](test/unit-c-name-production.c) (tag names), [test/unit-c-unique-attributes.c](test/unit-c-unique-attributes.c), [test/unit-c-ampersand-reject.c](test/unit-c-ampersand-reject.c) (standalone `&`), and [test/unit-c-namespace.c](test/unit-c-namespace.c). Added [test/unit-c-doctype.c](test/unit-c-doctype.c) and [test/unit-c-encoding.c](test/unit-c-encoding.c) for DOCTYPE/DTD and encoding declaration (docs/issues.md candidate features). Updated test runner, CMake, and docs (test_spec.md, quick_start_tests.md, issues.md) to reference the new modules.
+
+---
+
 ## [0.12.1] — 2026-03-01
 
 ### Added
 
-- **Compliance tests: standalone `&` and namespaces** — Tests for rejecting unescaped `&` in text and attribute values (docs/issues.md “Reject standalone `&` in content”) and for exposing `xmlns` / `xmlns:prefix` as attributes (namespace support candidate). See [test/unit-c-compliance.c](test/unit-c-compliance.c).
+- **Compliance tests: standalone `&` and namespaces** — Tests for rejecting unescaped `&` in text and attribute values (docs/issues.md “Reject standalone `&` in content”) and for exposing `xmlns` / `xmlns:prefix` as attributes (namespace support candidate). See [test/unit-c-ampersand-reject.c](test/unit-c-ampersand-reject.c) and [test/unit-c-namespace.c](test/unit-c-namespace.c).
 
 ### Fixed
 
@@ -36,7 +44,7 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 - **Stricter tag names (Name production)** — Parser rejects tag names that do not match an XML-like Name: must start with letter, `_`, or `:`; remaining characters may be letters, digits, `_`, `:`, `-`, `.`. Invalid names (e.g. `<2tag>`, `<.x>`) cause parse failure. Self-closing tags like `<r/>` are validated without the trailing `/`. See [docs/issues.md](docs/issues.md) (XML compliance candidates).
 - **Unique attribute names per element** — Parser rejects duplicate attribute names on the same element (XML well-formedness requirement). Documents with repeated attribute names (e.g. `<e a="1" a="2">`) now fail to parse.
-- **Compliance test module** — New [test/unit-c-compliance.c](test/unit-c-compliance.c) with tests for tag-name validation (reject digit-start, accept letter/underscore/colon/prefixed) and unique-attribute enforcement (reject duplicates, accept unique and single attributes). Wired into the C test runner and CMake.
+- **Compliance test modules** — New per-feature test files: [test/unit-c-name-production.c](test/unit-c-name-production.c) (tag-name validation: reject digit-start, accept letter/underscore/colon/prefixed) and [test/unit-c-unique-attributes.c](test/unit-c-unique-attributes.c) (reject duplicates, accept unique and single attributes). Wired into the C test runner and CMake.
 
 ### Changed
 

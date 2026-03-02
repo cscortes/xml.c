@@ -24,11 +24,16 @@ add_executable(
 	"${PROJECT_NAME}-test-c"
 	"${CMAKE_CURRENT_LIST_DIR}/test_main.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-ampersand-reject.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-cdata.c"
-	"${CMAKE_CURRENT_LIST_DIR}/unit-c-compliance.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-doctype.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-encoding.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-entities.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-name-production.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-namespace.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-null.c"
 	"${CMAKE_CURRENT_LIST_DIR}/unit-c-pi.c"
+	"${CMAKE_CURRENT_LIST_DIR}/unit-c-unique-attributes.c"
 	"${CMAKE_CURRENT_LIST_DIR}/wrap_realloc.c"
 )
 
