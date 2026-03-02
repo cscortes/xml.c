@@ -3,7 +3,7 @@
 - Parses an XML subset (comparable to other minimal XML/markup parsers), in short an XML reader.
 - Simple, small, and self-contained in one file.
 - Easy to embed in other projects without large external dependencies.
-- See **XML compliance** below for what is supported and what is not.
+- See **XML 1.0 compliance** below for what is supported and what is not.
 
 **Encoding:** The library assumes **UTF-8** for all input and output. The parse buffer, tag names, text content, and attribute values are treated as UTF-8 byte sequences. Character references (`&#N;` / `&#xN;`) are expanded to UTF-8. The `encoding` attribute in `<?xml ...?>` is honored: documents that declare a non-UTF-8 encoding are rejected; no encoding conversion is performed.
 
@@ -109,34 +109,34 @@ To sync from the original: `git fetch upstream && git merge upstream/master`.
 See [docs/programming_style.md](docs/programming_style.md) for style guidelines (including grammar for user-facing messages). The API reference is in [docs/xml_api.md](docs/xml_api.md); regenerate it with `cmake --build build --target api_docs` (requires Doxygen and Python 3).
 
 
-## Current xml.c XML compliance
+## Current xml.c XML 1.0 compliance
 
-xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 1.0](https://www.w3.org/TR/xml/): it rejects some valid XML and accepts some input that is not well-formed XML. The following table summarizes compliance with the bare XML standard.
+xml.c targets alignment with [XML 1.0](https://www.w3.org/TR/xml/) (well-formedness and common practice). It parses an **XML-like subset** and is **not** a full XML 1.0 implementation: it may reject some valid XML and accept some input that is not well-formed. The following table compares the XML 1.0 standard, the **original** [ooxi/xml.c](https://github.com/ooxi/xml.c) project, and **this fork**.
 
-| Feature | XML 1.0 | xml.c |
-|---------|---------|-------|
-| **Document** | | |
-| XML declaration `<?xml ...?>` | Optional | **Skipped** — treated as PI; not interpreted |
-| Single root element | Required | **Yes** — one root element only |
-| **Elements** | | |
-| Tag names (Name production) | Letter / `_` / `:` start; then Name chars | **Yes** — ASCII subset enforced (rejects e.g. `<2tag>`) |
-| Empty-element tags `<foo/>` | Allowed | **Yes** |
-| Proper nesting / matching tags | Required | **Yes** |
-| **Attributes** | | |
-| `name="value"` or `name='value'` | Required | **Yes** |
-| Unique attribute names per element | Required | **Yes** — duplicates rejected |
-| Entity/character refs in values | Allowed, must be expanded | **Yes** — predefined entities and decimal/hex character refs expanded |
-| **Content** | | |
-| Text content | Allowed | **Yes** |
-| Character references `&#N;` / `&#xN;` | Required to be expanded | **Yes** — expanded to UTF-8 in content and attributes |
-| Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **Yes** — five predefined entities expanded in content and attributes |
-| CDATA sections `<![CDATA[...]]>` | Allowed | **Yes** — parsed and exposed as character data |
-| **Other** | | |
-| Comments `<!-- ... -->` | Allowed | **Yes** — skipped before tags and between nodes |
-| Processing instructions `<?...?>` | Allowed | **Yes** — skipped (including `<?xml ...?>`) |
-| DTD / DOCTYPE | Optional | **No** — not supported |
-| Namespaces | Common practice (Namespaces in XML) | **No** — no namespace handling |
-| Encoding declaration / conversion | Declared and applied | **Partial** — `encoding` in `<?xml ...?>` is honored for **rejection** of non-UTF-8; only UTF-8 is accepted; no conversion |
+| Feature | XML 1.0 | Original (ooxi) | This fork |
+|---------|---------|-----------------|-----------|
+| **Document** | | | |
+| XML declaration `<?xml ...?>` | Optional | **No** — parse error with header/empty element | **Skipped** as PI; `encoding` read and enforced (non-UTF-8 rejected) |
+| Single root element | Required | **Yes** | **Yes** — one root element only |
+| **Elements** | | | |
+| Tag names (Name production) | Letter / `_` / `:` start; then Name chars | **No** — any chars until `>` or space | **Yes** — ASCII subset enforced (rejects e.g. `<2tag>`) |
+| Empty-element tags `<foo/>` | Allowed | **No** — parse error | **Yes** |
+| Proper nesting / matching tags | Required | **Yes** | **Yes** |
+| **Attributes** | | | |
+| `name="value"` or `name='value'` | Required | **No** — no full open-tag/attribute parsing | **Yes** |
+| Unique attribute names per element | Required | **No** | **Yes** — duplicates rejected |
+| Entity/character refs in values | Allowed, must be expanded | **No** | **Yes** — predefined entities and decimal/hex character refs expanded |
+| **Content** | | | |
+| Text content | Allowed | **Yes** | **Yes** |
+| Character references `&#N;` / `&#xN;` | Required to be expanded | **No** | **Yes** — expanded to UTF-8 in content and attributes |
+| Entity references `&amp;` `&lt;` etc. | Required in content when using `&` `<` etc. | **No** | **Yes** — five predefined entities expanded in content and attributes |
+| CDATA sections `<![CDATA[...]]>` | Allowed | **No** | **Yes** — parsed and exposed as character data |
+| **Other** | | | |
+| Comments `<!-- ... -->` | Allowed | **No** | **Yes** — skipped before tags and between nodes |
+| Processing instructions `<?...?>` | Allowed | **No** | **Yes** — skipped (including `<?xml ...?>`) |
+| DTD / DOCTYPE | Optional | **No** | **Partial** — `<!DOCTYPE ...>` skipped before root; not parsed; no external entities |
+| Namespaces | Common practice (Namespaces in XML) | **No** | **Partial** — `xmlns` and `xmlns:prefix` exposed as normal attributes; no resolution or prefixed-name API |
+| Encoding declaration / conversion | Declared and applied | **No** | **Partial** — `encoding` in `<?xml ...?>` honored for **rejection** of non-UTF-8; only UTF-8 accepted; no conversion |
 
 **Summary:** Use xml.c only for controlled, simple XML-like input (elements, attributes, text). Input must be UTF-8 (or ASCII); other encodings are not supported. For standards-compliant or arbitrary XML, use a full parser (e.g. libxml2, Expat).
 

@@ -29,7 +29,7 @@ Fixes and features tracked from [ooxi/xml.c](https://github.com/ooxi/xml.c) issu
 
 ## XML compliance: candidate features
 
-Features we could add to improve alignment with XML 1.0 (well-formedness and common practice). See README "XML compliance" for current status. **Implementation difficulty:** 1 = easy, 5 = hardest to implement. **Useful:** 1 = not needed, 5 = necessary.
+This project targets **XML 1.0** compliance (well-formedness and common practice). Features below improve alignment with XML 1.0 unless noted. See README "XML compliance" for current status. **Implementation difficulty:** 1 = easy, 5 = hardest to implement. **Useful:** 1 = not needed, 5 = necessary.
 
 | Priority | Status | Feature | Implementation difficulty (1–5) | Useful (1–5) | Description |
 |----------|--------|---------|--------------------------------|--------------|-------------|
@@ -41,4 +41,4 @@ Features we could add to improve alignment with XML 1.0 (well-formedness and com
 | Lower | **Done** | **Namespace support** | 4 | 4 | `xmlns` and `xmlns:prefix` are parsed and exposed as normal attributes (see [test/unit-c-namespace.c](test/unit-c-namespace.c)); no separate namespace API or prefixed-name resolution. |
 | Lower | **Done** | **DOCTYPE / DTD handling** | 4 | 3 | Parser skips `<!DOCTYPE ...>` before the root element (internal subset and quoted literals handled so the closing `>` is found correctly). No parsing of the DTD or external entities. See [test/unit-c-doctype.c](test/unit-c-doctype.c). |
 | Lower | **Done** | **Encoding declaration** | 2 | 3 | Parser reads `encoding` in `<?xml ...?>` and rejects the document if it is not UTF-8 (case-insensitive). **UTF-8 is the only supported encoding**; input and all string data are treated as UTF-8. See [test/unit-c-encoding.c](test/unit-c-encoding.c). |
-| Lower | Not started | **XML 1.1** | 3 | 2 | Optional support for XML 1.1 name and character rules (e.g. NEL, control chars) if targeting 1.1. |
+| Lower | Deferred | **XML 1.1** | 3 | 2 | XML 1.1 name and character rules (e.g. NEL, control chars). **Out of scope for current XML 1.0 focus;** may be considered only if a future need arises. |
