@@ -248,18 +248,12 @@ static void xml_node_free(struct xml_node* node) {
 		xml_string_free(node->content);
 	}
 
-	struct xml_attribute** at = node->attributes;
-	while (*at != NULL) {
+	for (struct xml_attribute** at = node->attributes; *at != NULL; ++at)
 		xml_attribute_free(*at);
-		++at;
-	}
 	free(node->attributes);
 
-	struct xml_node** it = node->children;
-	while (*it != NULL) {
+	for (struct xml_node** it = node->children; *it != NULL; ++it)
 		xml_node_free(*it);
-		++it;
-	}
 	free(node->children);
 
 	free(node);
@@ -1249,7 +1243,10 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	/* Expand entity and character references (docs/issues.md). */
 	if (length == 0) {
 		struct xml_string* content = malloc(sizeof(struct xml_string));
-		if (content == NULL) return NULL;
+		if (content == NULL) 
+		{
+			return NULL;
+		}
 		content->buffer = &parser->buffer[start];
 		content->length = 0;
 		content->buffer_owned = false;
@@ -1499,19 +1496,13 @@ exit_failure:
 		xml_string_free(content);
 	}
 	if (attributes != NULL) {
-		struct xml_attribute** at = attributes;
-		while (*at != NULL) {
+		for (struct xml_attribute** at = attributes; *at != NULL; ++at)
 			xml_attribute_free(*at);
-			++at;
-		}
 		free(attributes);
 	}
 
-	struct xml_node** it = children;
-	while (*it != NULL) {
+	for (struct xml_node** it = children; *it != NULL; ++it)
 		xml_node_free(*it);
-		++it;
-	}
 	free(children);
 
 	return NULL;
