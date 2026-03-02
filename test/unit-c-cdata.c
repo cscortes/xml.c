@@ -237,6 +237,24 @@ static void test_cdata_unclosed_invalid(void **state) {
 }
 
 
+/**
+ * CDATA content is not entity-expanded: &amp; and &lt; appear as literal in content.
+ */
+static void test_cdata_entity_literal_not_expanded(void **state) {
+	(void)state;
+	SOURCE(source, "<root><![CDATA[&amp; &lt; &gt;]]></root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (!document) {
+		free(source);
+		return;
+	}
+	struct xml_node* root = xml_document_root(document);
+	assert_true(string_equals(xml_node_content(root), "&amp; &lt; &gt;"));
+	xml_document_free(document, true);
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_cdata_simple),
 	cmocka_unit_test(test_cdata_angle_brackets),
@@ -247,6 +265,7 @@ static void test_cdata_unclosed_invalid(void **state) {
 	cmocka_unit_test(test_cdata_adjacent_sections),
 	cmocka_unit_test(test_cdata_with_newline),
 	cmocka_unit_test(test_cdata_unclosed_invalid),
+	cmocka_unit_test(test_cdata_entity_literal_not_expanded),
 };
 
 void get_unit_c_cdata_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

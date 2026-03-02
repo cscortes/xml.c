@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.13.1] — 2026-03-01
+
+### Added
+
+- **Test gap analysis and new test cases** — Added [docs/test_gap_analysis.md](docs/test_gap_analysis.md) summarizing gaps from the test spec and API. New tests: empty buffer and malformed parse (category 3); self-closing root, string length/copy, out-of-range child/attribute (categories 1 and 5); `xml_document_buffer_length(NULL)` (category 6). Second batch: empty element content NULL, partial/zero-length string copy, whitespace-only and malformed inputs, empty attribute value, duplicate-child easy_child, comment-only and PI-only documents, `xml_string_equals_cstr` NULL-as-empty, mixed content, many attributes, stray closing tag; encoding (version+encoding, unsupported case); CDATA entity literal; namespace three-prefixed; DOCTYPE PUBLIC/SYSTEM skipped; invalid entity in attribute. Test count 99 → 128.
+
+---
+
 ## [0.13.0] — 2026-03-01
 
 ### Added

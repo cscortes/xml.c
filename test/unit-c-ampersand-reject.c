@@ -143,12 +143,29 @@ static void test_accept_amp_entity_in_content(void **state) {
 }
 
 
+/**
+ * Invalid entity in attribute (e.g. &bad;) must be rejected.
+ */
+static void test_reject_invalid_entity_in_attribute(void **state) {
+	(void)state;
+	SOURCE(source, "<root a=\"&bad;\"/>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document) {
+		xml_document_free(document, true);
+		fail_msg("%s", "Expected parse failure for invalid entity in attribute");
+	}
+	free(source);
+	assert_null(document);
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_reject_standalone_ampersand_in_content),
 	cmocka_unit_test(test_reject_ampersand_at_end_of_content),
 	cmocka_unit_test(test_reject_invalid_entity_in_content),
 	cmocka_unit_test(test_reject_standalone_ampersand_in_attribute),
 	cmocka_unit_test(test_accept_amp_entity_in_content),
+	cmocka_unit_test(test_reject_invalid_entity_in_attribute),
 };
 
 void get_unit_c_ampersand_reject_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

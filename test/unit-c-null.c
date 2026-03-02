@@ -114,6 +114,15 @@ static void test_api_null_string_compare(void **state) {
 }
 
 
+/**
+ * xml_document_buffer_length(NULL) must not crash and must return 0.
+ */
+static void test_api_null_document_buffer_length(void **state) {
+	(void)state;
+	assert_int_equal(xml_document_buffer_length(NULL), 0);
+}
+
+
 static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_document_free_null),
 	cmocka_unit_test(test_api_null_document),
@@ -122,6 +131,7 @@ static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_api_null_node_attribute_c_string),
 	cmocka_unit_test(test_api_null_string),
 	cmocka_unit_test(test_api_null_string_compare),
+	cmocka_unit_test(test_api_null_document_buffer_length),
 };
 
 void get_unit_c_null_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

@@ -75,8 +75,8 @@ This document defines the test categories for the xml.c library, inventories the
 
 **Suggested tests**
 
-- `test_parse_empty_buffer` — length 0 (or NULL buffer if allowed); expect NULL document.
-- `test_parse_malformed_returns_null` — e.g. `<root>` with no closing tag, or truncated tag; expect NULL.
+- ~~`test_parse_empty_buffer`~~ — **implemented**: `test_parse_empty_buffer` in unit-c.c; length 0, expect NULL document.
+- ~~`test_parse_malformed_returns_null`~~ — **implemented**: `test_parse_malformed_returns_null` in unit-c.c; truncated tag and wrong closing tag; expect NULL.
 - ~~Optional: `test_parse_error_at_end_of_buffer`~~ — **implemented**: malformed input so error is reported at the last byte; run under ASan to ensure no over-read in the error path.
 
 ---
@@ -112,7 +112,7 @@ This document defines the test categories for the xml.c library, inventories the
 
 **Suggested tests**
 
-- Optional: `test_string_length_and_copy` — parse minimal doc, get a node name, call `xml_string_length` and `xml_string_copy`, assert length and copied content. Rest is already covered.
+- ~~Optional: `test_string_length_and_copy`~~ — **implemented**: `test_string_length_and_copy` in unit-c.c; parse minimal doc, get node name, call `xml_string_length` and `xml_string_copy`, assert length and copied content. Out-of-range child/attribute tests: `test_node_child_out_of_range`, `test_node_attribute_out_of_range`. Rest is already covered.
 
 ---
 
@@ -156,6 +156,7 @@ All of the following are implemented in [test/unit-c-null.c](../test/unit-c-null
 | `xml_node_content_c_string(node)` | node NULL | No crash; return NULL. |
 | `xml_string_length(string)` | string NULL | No crash; return 0. |
 | `xml_string_copy(string, buffer, length)` | string NULL | No crash; no-op. |
+| `xml_document_buffer_length(document)` | document NULL | No crash; return 0. |
 
 **Test helpers:** Helpers that take `xml_string*` (e.g. `string_equals` in unit-c.c) and are used with API return values that may be NULL should handle NULL (e.g. return false or a documented value) to avoid dereference inside the test.
 

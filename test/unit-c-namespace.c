@@ -136,10 +136,29 @@ static void test_namespace_default_and_prefixed_exposed(void **state) {
 }
 
 
+/**
+ * Element with multiple prefixed xmlns attributes; all exposed.
+ */
+static void test_namespace_three_prefixed_exposed(void **state) {
+	(void)state;
+	SOURCE(source, "<root xmlns:a=\"http://a\" xmlns:b=\"http://b\" xmlns:c=\"http://c\">x</root>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_int_equal(xml_node_attributes(root), 3);
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_namespace_default_xmlns_exposed),
 	cmocka_unit_test(test_namespace_prefixed_xmlns_exposed),
 	cmocka_unit_test(test_namespace_default_and_prefixed_exposed),
+	cmocka_unit_test(test_namespace_three_prefixed_exposed),
 };
 
 void get_unit_c_namespace_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

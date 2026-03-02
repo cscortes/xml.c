@@ -374,6 +374,71 @@ static void test_parse_exact_length_boundary(void **state) {
 
 
 /**
+ * xml_parse_document with length 0 must return NULL (no read, no crash).
+ * Spec category 3: empty buffer.
+ */
+static void test_parse_empty_buffer(void **state) {
+	(void)state;
+	static uint8_t empty[] = { 0 };
+	struct xml_document* doc = xml_parse_document(empty, 0);
+	assert_null(doc);
+}
+
+
+/**
+ * Malformed XML must yield NULL document (category 3).
+ * Truncated tag and wrong closing tag; expect NULL.
+ */
+static void test_parse_malformed_returns_null(void **state) {
+	(void)state;
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	SOURCE(trunc, "<");
+	struct xml_document* d1 = xml_parse_document(trunc, strlen((char const*)trunc));
+	assert_null(d1);
+	free(trunc);
+
+	SOURCE(wrong_close, "<root></other>");
+	struct xml_document* d2 = xml_parse_document(wrong_close, strlen((char const*)wrong_close));
+	assert_null(d2);
+	free(wrong_close);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+}
+
+
+/**
+ * Single self-closing root element (e.g. <a/>). Spec category 1 optional.
+ * Parser exposes self-closing tag name including trailing slash (e.g. "a/").
+ */
+static void test_parse_self_closing_root(void **state) {
+	(void)state;
+	SOURCE(source, "<a/>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_int_equal(xml_node_children(root), 0);
+	/* Self-closing: name is "a/" per current parser behavior */
+	assert_true(string_equals(xml_node_name(root), "a/"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
  * Attributes from in-memory buffer: node with 0 attributes.
  * xml_parse_document(source, len); no attributes on first child.
  */
@@ -878,6 +943,84 @@ static void test_xml_comments_multiline(void **state) {
 
 
 /**
+ * xml_node_child with out-of-range index returns NULL.
+ */
+static void test_node_child_out_of_range(void **state) {
+	(void)state;
+	SOURCE(source, "<r><a/></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	assert_non_null(root);
+	assert_int_equal(xml_node_children(root), 1);
+
+	assert_non_null(xml_node_child(root, 0));
+	assert_null(xml_node_child(root, 1));
+	assert_null(xml_node_child(root, 99));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_node_attribute_name / xml_node_attribute_content with out-of-range index return NULL.
+ * (_c_string out-of-range is covered in test_attribute_c_string_helpers.)
+ */
+static void test_node_attribute_out_of_range(void **state) {
+	(void)state;
+	SOURCE(source, "<r><n foo=\"bar\"/></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* n = xml_node_child(root, 0);
+	assert_non_null(n);
+	assert_int_equal(xml_node_attributes(n), 1);
+
+	assert_non_null(xml_node_attribute_name(n, 0));
+	assert_non_null(xml_node_attribute_content(n, 0));
+	assert_null(xml_node_attribute_name(n, 1));
+	assert_null(xml_node_attribute_content(n, 1));
+	assert_null(xml_node_attribute_name(n, 99));
+	assert_null(xml_node_attribute_content(n, 99));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_string_length and xml_string_copy in isolation (spec category 5).
+ * Parse minimal doc, get node name, assert length and copied content.
+ */
+static void test_string_length_and_copy(void **state) {
+	(void)state;
+	SOURCE(source, "<Hello>World</Hello>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_string* name = xml_node_name(root);
+	assert_non_null(name);
+
+	size_t len = xml_string_length(name);
+	assert_int_equal(len, 5);
+
+	uint8_t* buf = malloc(len + 1);
+	assert_non_null(buf);
+	xml_string_copy(name, buf, len);
+	buf[len] = 0;
+	assert_string_equal((char const*)buf, "Hello");
+	free(buf);
+
+	xml_document_free(document, true);
+}
+
+
+/**
  * C-string helpers for attributes: xml_node_attribute_name_c_string and
  * xml_node_attribute_content_c_string return 0-terminated copies; out-of-range returns NULL.
  */
@@ -975,6 +1118,328 @@ static void test_xml_string_equals_cstr(void **state) {
 }
 
 
+/**
+ * Element with no text content: xml_node_content is NULL, xml_node_content_c_string returns NULL.
+ */
+static void test_node_content_empty_element(void **state) {
+	(void)state;
+	SOURCE(source, "<r><empty></empty><self/><child><inner/></child></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* empty = xml_node_child(root, 0);
+	struct xml_node* self = xml_node_child(root, 1);
+	struct xml_node* child = xml_node_child(root, 2);
+
+	assert_null(xml_node_content(empty));
+	assert_null(xml_node_content_c_string(empty));
+
+	assert_null(xml_node_content(self));
+	assert_null(xml_node_content_c_string(self));
+
+	assert_null(xml_node_content(child));
+	assert_null(xml_node_content_c_string(child));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_string_copy with buffer shorter than string: copies only length bytes (no overrun).
+ */
+static void test_xml_string_copy_partial(void **state) {
+	(void)state;
+	SOURCE(source, "<r>Hello</r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_string* content = xml_node_content(xml_document_root(document));
+	assert_non_null(content);
+	assert_int_equal(xml_string_length(content), 5);
+
+	uint8_t buf[3];
+	memset(buf, 0xAA, sizeof(buf));
+	xml_string_copy(content, buf, 2);
+	buf[2] = 0;
+	assert_int_equal((unsigned char)buf[0], (unsigned char)'H');
+	assert_int_equal((unsigned char)buf[1], (unsigned char)'e');
+	assert_int_equal((unsigned char)buf[2], 0);
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_string_copy with length 0: no write (documented: at most length bytes).
+ */
+static void test_xml_string_copy_zero_length(void **state) {
+	(void)state;
+	SOURCE(source, "<r>x</r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_string* content = xml_node_content(xml_document_root(document));
+	uint8_t buf[4] = { 0xBB, 0xBB, 0xBB, 0xBB };
+	xml_string_copy(content, buf, 0);
+	assert_int_equal(buf[0], 0xBB);
+	assert_int_equal(buf[1], 0xBB);
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Document with only whitespace (no root tag) must return NULL.
+ */
+static void test_parse_whitespace_only_returns_null(void **state) {
+	(void)state;
+	SOURCE(source, "   \n\t  \r\n ");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	struct xml_document* doc = xml_parse_document(source, strlen((char const*)source));
+	assert_null(doc);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+	free(source);
+}
+
+
+/**
+ * Malformed XML: unclosed attribute quote must yield NULL.
+ */
+static void test_parse_malformed_unclosed_quote(void **state) {
+	(void)state;
+	SOURCE(source, "<root a=\"unclosed");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	struct xml_document* doc = xml_parse_document(source, strlen((char const*)source));
+	assert_null(doc);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+	free(source);
+}
+
+
+/**
+ * Attribute with empty value: parsed and content has length 0.
+ */
+static void test_attribute_empty_value(void **state) {
+	(void)state;
+	SOURCE(source, "<r><n empty=\"\" a=\"b\"/></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* n = xml_node_child(root, 0);
+	assert_int_equal(xml_node_attributes(n), 2);
+
+	struct xml_string* empty_attr = xml_node_attribute_content(n, 0);
+	assert_non_null(empty_attr);
+	assert_int_equal(xml_string_length(empty_attr), 0);
+	assert_true(xml_string_equals_cstr(empty_attr, (uint8_t const*)""));
+
+	struct xml_string* second = xml_node_attribute_content(n, 1);
+	assert_true(xml_string_equals_cstr(second, (uint8_t const*)"b"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * xml_easy_child returns NULL when two children have the same name (path ambiguous).
+ */
+static void test_easy_child_returns_null_when_duplicate_children(void **state) {
+	(void)state;
+	SOURCE(source, "<r><Foo>a</Foo><Foo>b</Foo></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	assert_int_equal(xml_node_children(root), 2);
+
+	struct xml_node* ambiguous = xml_easy_child(root, (uint8_t const*)"Foo", (uint8_t const*)0);
+	assert_null(ambiguous);
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Document that is only a comment (no root element) must return NULL.
+ */
+static void test_parse_only_comment_returns_null(void **state) {
+	(void)state;
+	SOURCE(source, "<!-- only a comment -->");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	struct xml_document* doc = xml_parse_document(source, strlen((char const*)source));
+	assert_null(doc);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+	free(source);
+}
+
+
+/**
+ * Document that is only a processing instruction (no root element) must return NULL.
+ */
+static void test_parse_only_pi_returns_null(void **state) {
+	(void)state;
+	SOURCE(source, "<?xml version=\"1.0\"?>");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	struct xml_document* doc = xml_parse_document(source, strlen((char const*)source));
+	assert_null(doc);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+	free(source);
+}
+
+
+/**
+ * xml_string_equals_cstr with NULL cstr: API treats NULL as empty; empty string equals NULL cstr.
+ */
+static void test_xml_string_equals_cstr_null_treated_as_empty(void **state) {
+	(void)state;
+	SOURCE(source, "<r a=\"\"/>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_string* attr_content = xml_node_attribute_content(root, 0);
+	assert_non_null(attr_content);
+	assert_int_equal(xml_string_length(attr_content), 0);
+
+	assert_true(xml_string_equals_cstr(attr_content, NULL));
+	assert_true(xml_string_equals_cstr(attr_content, (uint8_t const*)""));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Mixed content: text before and after child is concatenated as node content.
+ */
+static void test_mixed_content_text_before_child(void **state) {
+	(void)state;
+	SOURCE(source, "<r>before<child/>after</r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	assert_true(string_equals(xml_node_content(root), "beforeafter"));
+	assert_int_equal(xml_node_children(root), 1);
+
+	struct xml_node* ch = xml_node_child(root, 0);
+	assert_non_null(ch);
+	assert_true(string_equals(xml_node_name(ch), "child/"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Element with several attributes: count and last name/value correct.
+ */
+static void test_many_attributes(void **state) {
+	(void)state;
+	SOURCE(source, "<r><n a1=\"v1\" a2=\"v2\" a3=\"v3\" a4=\"v4\" a5=\"v5\"/></r>");
+
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+
+	struct xml_node* root = xml_document_root(document);
+	struct xml_node* n = xml_node_child(root, 0);
+	assert_int_equal(xml_node_attributes(n), 5);
+
+	assert_true(string_equals(xml_node_attribute_name(n, 0), "a1"));
+	assert_true(string_equals(xml_node_attribute_content(n, 0), "v1"));
+	assert_true(string_equals(xml_node_attribute_name(n, 4), "a5"));
+	assert_true(string_equals(xml_node_attribute_content(n, 4), "v5"));
+
+	xml_document_free(document, true);
+}
+
+
+/**
+ * Malformed: stray closing tag (no opening) must yield NULL.
+ */
+static void test_parse_malformed_stray_close_returns_null(void **state) {
+	(void)state;
+	SOURCE(source, "</orphan>");
+
+	int saved_stderr = dup(STDERR_FILENO);
+	if (saved_stderr >= 0) {
+		int devnull = open("/dev/null", O_WRONLY);
+		if (devnull >= 0) {
+			dup2(devnull, STDERR_FILENO);
+			close(devnull);
+		}
+	}
+
+	struct xml_document* doc = xml_parse_document(source, strlen((char const*)source));
+	assert_null(doc);
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+	free(source);
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_xml_parse_document_0),
 	cmocka_unit_test(test_xml_parse_document_1),
@@ -984,6 +1449,14 @@ static void test_xml_string_equals_cstr(void **state) {
 	cmocka_unit_test(test_open_document_exact_buffer),
 	cmocka_unit_test(test_open_document_empty_file),
 	cmocka_unit_test(test_parse_exact_length_boundary),
+	cmocka_unit_test(test_parse_empty_buffer),
+	cmocka_unit_test(test_parse_malformed_returns_null),
+	cmocka_unit_test(test_parse_self_closing_root),
+	cmocka_unit_test(test_parse_whitespace_only_returns_null),
+	cmocka_unit_test(test_parse_malformed_unclosed_quote),
+	cmocka_unit_test(test_parse_only_comment_returns_null),
+	cmocka_unit_test(test_parse_only_pi_returns_null),
+	cmocka_unit_test(test_parse_malformed_stray_close_returns_null),
 	cmocka_unit_test(test_attributes_in_memory_0),
 	cmocka_unit_test(test_attributes_in_memory_1),
 	cmocka_unit_test(test_attributes_in_memory_2),
@@ -991,8 +1464,19 @@ static void test_xml_string_equals_cstr(void **state) {
 	cmocka_unit_test(test_attributes_from_file_0),
 	cmocka_unit_test(test_attributes_from_file_1),
 	cmocka_unit_test(test_attributes_from_file_2),
+	cmocka_unit_test(test_attribute_empty_value),
+	cmocka_unit_test(test_many_attributes),
 	cmocka_unit_test(test_tiled_svg_style_multiline_opening_tag),
 	cmocka_unit_test(test_find_node_by_tag_name),
+	cmocka_unit_test(test_easy_child_returns_null_when_duplicate_children),
+	cmocka_unit_test(test_mixed_content_text_before_child),
+	cmocka_unit_test(test_node_child_out_of_range),
+	cmocka_unit_test(test_node_attribute_out_of_range),
+	cmocka_unit_test(test_node_content_empty_element),
+	cmocka_unit_test(test_string_length_and_copy),
+	cmocka_unit_test(test_xml_string_copy_partial),
+	cmocka_unit_test(test_xml_string_copy_zero_length),
+	cmocka_unit_test(test_xml_string_equals_cstr_null_treated_as_empty),
 	cmocka_unit_test(test_parse_error_at_end_of_buffer),
 	cmocka_unit_test(test_realloc_failure_no_leak),
 	cmocka_unit_test(test_xml_comments_skipped),

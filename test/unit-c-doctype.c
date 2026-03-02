@@ -172,12 +172,31 @@ static void test_doctype_after_xml_decl(void **state) {
 }
 
 
+/**
+ * DOCTYPE with PUBLIC and SYSTEM identifiers (external subset) is skipped; root parsed.
+ */
+static void test_doctype_public_system_skipped(void **state) {
+	(void)state;
+	SOURCE(source, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html/>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_non_null(root);
+		assert_true(string_equals(xml_node_name(root), "html/"));
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
 	static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_doctype_minimal_before_root),
 	cmocka_unit_test(test_doctype_name_only_before_root),
 	cmocka_unit_test(test_doctype_external_id_skipped_or_rejected),
 	cmocka_unit_test(test_doctype_internal_subset_empty_before_root),
 	cmocka_unit_test(test_doctype_after_xml_decl),
+	cmocka_unit_test(test_doctype_public_system_skipped),
 };
 
 void get_unit_c_doctype_tests(const struct CMUnitTest** out_tests, size_t* out_count) {

@@ -158,12 +158,49 @@ static void test_encoding_absent_default_utf8(void **state) {
 }
 
 
+/**
+ * XML declaration with both version and encoding (UTF-8) is accepted.
+ */
+static void test_encoding_version_and_encoding_utf8(void **state) {
+	(void)state;
+	SOURCE(source, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><r>ok</r>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	assert_non_null(document);
+	if (document) {
+		struct xml_node* root = xml_document_root(document);
+		assert_non_null(root);
+		assert_true(string_equals(xml_node_content(root), "ok"));
+		xml_document_free(document, true);
+	} else {
+		free(source);
+	}
+}
+
+
+/**
+ * Unsupported encoding with different casing (e.g. iso-8859-1) is rejected.
+ */
+static void test_encoding_unsupported_case_variants_rejected(void **state) {
+	(void)state;
+	SOURCE(source, "<?xml encoding=\"iso-8859-1\"?><r/>");
+	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
+	if (document) {
+		xml_document_free(document, true);
+		fail_msg("%s", "Expected parse failure for iso-8859-1");
+	}
+	free(source);
+	assert_null(document);
+}
+
+
 static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_encoding_utf8_accepted),
 	cmocka_unit_test(test_encoding_utf8_case_insensitive),
 	cmocka_unit_test(test_encoding_unsupported_rejected),
 	cmocka_unit_test(test_encoding_unsupported_win1252_rejected),
 	cmocka_unit_test(test_encoding_absent_default_utf8),
+	cmocka_unit_test(test_encoding_version_and_encoding_utf8),
+	cmocka_unit_test(test_encoding_unsupported_case_variants_rejected),
 };
 
 void get_unit_c_encoding_tests(const struct CMUnitTest** out_tests, size_t* out_count) {
