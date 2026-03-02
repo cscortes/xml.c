@@ -431,10 +431,96 @@ static bool xml_skip_comment(struct xml_parser* parser) {
 
 /**
  * [PRIVATE]
+ * Case-insensitive comparison of buffer segment to "utf-8".
+ * (docs/issues.md: encoding declaration; only UTF-8 is supported.)
+ */
+static bool encoding_is_utf8(uint8_t const* buf, size_t len) {
+	static char const utf8[] = "utf-8";
+	size_t i;
+	if (len != sizeof(utf8) - 1)
+		return false;
+	for (i = 0; i < len; i++) {
+		uint8_t c = buf[i];
+		if (c >= (uint8_t)'A' && c <= (uint8_t)'Z')
+			c += (uint8_t)32;
+		if (c != (uint8_t)utf8[i])
+			return false;
+	}
+	return true;
+}
+
+/**
+ * [PRIVATE]
+ * If the PI at parser->position is the XML declaration, check encoding.
+ * Assumes we are at "<?"; uses a local position to scan. If encoding is
+ * present and not UTF-8, calls xml_parser_error and returns false (parser
+ * position unchanged). Otherwise returns true (caller will skip the PI).
+ */
+static bool xml_decl_encoding_ok(struct xml_parser* parser) {
+	size_t pos = parser->position + 2; /* past "<?"
+	 */
+	if (pos + 3 > parser->length)
+		return true;
+	/* Target must be "xml" (case-insensitive) */
+	if ((parser->buffer[pos] != 'x' && parser->buffer[pos] != 'X')
+	    || (parser->buffer[pos + 1] != 'm' && parser->buffer[pos + 1] != 'M')
+	    || (parser->buffer[pos + 2] != 'l' && parser->buffer[pos + 2] != 'L'))
+		return true;
+	pos += 3;
+	if (pos < parser->length && (parser->buffer[pos] == ' ' || parser->buffer[pos] == '\t' || parser->buffer[pos] == '\n' || parser->buffer[pos] == '\r'))
+		pos++;
+	/* Scan for encoding="..." or encoding='...' */
+	while (pos + 10 <= parser->length) {
+		/* Look for 'encoding' (case-insensitive) */
+		if ((parser->buffer[pos] == 'e' || parser->buffer[pos] == 'E')
+		    && (parser->buffer[pos + 1] == 'n' || parser->buffer[pos + 1] == 'N')
+		    && (parser->buffer[pos + 2] == 'c' || parser->buffer[pos + 2] == 'C')
+		    && (parser->buffer[pos + 3] == 'o' || parser->buffer[pos + 3] == 'O')
+		    && (parser->buffer[pos + 4] == 'd' || parser->buffer[pos + 4] == 'D')
+		    && (parser->buffer[pos + 5] == 'i' || parser->buffer[pos + 5] == 'I')
+		    && (parser->buffer[pos + 6] == 'n' || parser->buffer[pos + 6] == 'N')
+		    && (parser->buffer[pos + 7] == 'g' || parser->buffer[pos + 7] == 'G')) {
+			pos += 8;
+			while (pos < parser->length && (parser->buffer[pos] == ' ' || parser->buffer[pos] == '\t' || parser->buffer[pos] == '\n' || parser->buffer[pos] == '\r'))
+				pos++;
+			if (pos >= parser->length || (parser->buffer[pos] != '='))
+				break;
+			pos++;
+			while (pos < parser->length && (parser->buffer[pos] == ' ' || parser->buffer[pos] == '\t' || parser->buffer[pos] == '\n' || parser->buffer[pos] == '\r'))
+				pos++;
+			if (pos >= parser->length)
+				break;
+			if (parser->buffer[pos] != '"' && parser->buffer[pos] != '\'')
+				break;
+			{
+				uint8_t quote = parser->buffer[pos];
+				size_t start = pos + 1;
+				pos = start;
+				while (pos < parser->length && parser->buffer[pos] != quote)
+					pos++;
+				if (pos >= parser->length)
+					break;
+				if (!encoding_is_utf8(&parser->buffer[start], pos - start)) {
+					xml_parser_error(parser, CURRENT_CHARACTER, "xml_skip_processing_instruction::unsupported encoding (only UTF-8 supported)");
+					return false;
+				}
+				return true;
+			}
+		}
+		if (parser->buffer[pos] == '?' && pos + 1 < parser->length && parser->buffer[pos + 1] == '>')
+			break;
+		pos++;
+	}
+	return true;
+}
+
+/**
+ * [PRIVATE]
  * Skips an XML processing instruction \c <? ... ?> if the parser is positioned at \c <?.
  * Includes the XML declaration \c <?xml ...?> (docs/issues.md #30).
+ * For \c <?xml ...?>, rejects unsupported encoding (docs/issues.md: encoding declaration).
  *
- * @return true if a PI was skipped, false if not at \c <? or on error
+ * @return true if a PI was skipped, false if not at \c <? or on error (e.g. unsupported encoding)
  */
 static bool xml_skip_processing_instruction(struct xml_parser* parser) {
 	xml_parser_info(parser, "processing_instruction");
@@ -442,6 +528,8 @@ static bool xml_skip_processing_instruction(struct xml_parser* parser) {
 		return false;
 	if (parser->buffer[parser->position] != '<'
 	    || parser->buffer[parser->position + 1] != '?')
+		return false;
+	if (!xml_decl_encoding_ok(parser))
 		return false;
 	parser->position += 2;
 	while (parser->position + 2 <= parser->length) {
@@ -453,6 +541,77 @@ static bool xml_skip_processing_instruction(struct xml_parser* parser) {
 		parser->position++;
 	}
 	xml_parser_error(parser, CURRENT_CHARACTER, "xml_skip_processing_instruction::PI not closed (missing ?>)");
+	return false;
+}
+
+
+/**
+ * [PRIVATE]
+ * Skips a DOCTYPE declaration \c <!DOCTYPE ...> if the parser is positioned at \c <!DOCTYPE.
+ * (docs/issues.md: DOCTYPE/DTD handling; skip only, no external entities.)
+ * Handles internal subset [ ... ] and quoted literals so the closing \c > is found correctly.
+ *
+ * @return true if a DOCTYPE was skipped, false if not at \c <!DOCTYPE or on error
+ */
+static bool xml_skip_doctype(struct xml_parser* parser) {
+	xml_parser_info(parser, "doctype");
+	if (parser->position + 9 > parser->length)
+		return false;
+	if (parser->buffer[parser->position] != '<'
+	    || parser->buffer[parser->position + 1] != '!'
+	    || parser->buffer[parser->position + 2] != 'D'
+	    || parser->buffer[parser->position + 3] != 'O'
+	    || parser->buffer[parser->position + 4] != 'C'
+	    || parser->buffer[parser->position + 5] != 'T'
+	    || parser->buffer[parser->position + 6] != 'Y'
+	    || parser->buffer[parser->position + 7] != 'P'
+	    || parser->buffer[parser->position + 8] != 'E')
+		return false;
+	size_t pos = parser->position + 9;
+	int in_dquote = 0;
+	int in_squote = 0;
+	int bracket_depth = 0;
+	while (pos < parser->length) {
+		uint8_t c = parser->buffer[pos];
+		if (in_dquote) {
+			if (c == '"')
+				in_dquote = 0;
+			pos++;
+			continue;
+		}
+		if (in_squote) {
+			if (c == '\'')
+				in_squote = 0;
+			pos++;
+			continue;
+		}
+		if (c == '"') {
+			in_dquote = 1;
+			pos++;
+			continue;
+		}
+		if (c == '\'') {
+			in_squote = 1;
+			pos++;
+			continue;
+		}
+		if (c == '[') {
+			bracket_depth++;
+			pos++;
+			continue;
+		}
+		if (c == ']') {
+			bracket_depth--;
+			pos++;
+			continue;
+		}
+		if (c == '>' && bracket_depth == 0) {
+			parser->position = pos + 1;
+			return true;
+		}
+		pos++;
+	}
+	xml_parser_error(parser, CURRENT_CHARACTER, "xml_skip_doctype::DOCTYPE not closed (missing >)");
 	return false;
 }
 
@@ -829,7 +988,7 @@ static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) 
 static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 	xml_parser_info(parser, "tag_open");
 	xml_skip_whitespace(parser);
-	while (xml_skip_comment(parser) || xml_skip_processing_instruction(parser))
+	while (xml_skip_comment(parser) || xml_skip_processing_instruction(parser) || xml_skip_doctype(parser))
 		xml_skip_whitespace(parser);
 
 	/* Consume `<'

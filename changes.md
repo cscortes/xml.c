@@ -4,6 +4,19 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.13.0] — 2026-03-01
+
+### Added
+
+- **DOCTYPE / DTD handling (skip)** — Parser skips `<!DOCTYPE ...>` before the root element. Internal subset `[ ... ]` and quoted literals in the declaration are handled so the closing `>` is found correctly. No parsing of the DTD or resolution of external entities. See [docs/issues.md](docs/issues.md) and [test/unit-c-doctype.c](test/unit-c-doctype.c).
+- **Encoding declaration (reject non-UTF-8)** — Parser reads the `encoding` attribute in `<?xml ...?>` and rejects the document if it is not UTF-8 (case-insensitive). Only UTF-8 is supported; no encoding conversion is performed. See [docs/issues.md](docs/issues.md) and [test/unit-c-encoding.c](test/unit-c-encoding.c).
+
+### Changed
+
+- **README encoding** — Encoding paragraph and compliance table updated to state that the XML declaration `encoding` is honored for rejection of non-UTF-8.
+
+---
+
 ## [0.12.2] — 2026-03-01
 
 ### Changed

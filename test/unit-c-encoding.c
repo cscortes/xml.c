@@ -108,27 +108,24 @@ static void test_encoding_utf8_case_insensitive(void **state) {
 
 
 /**
- * Unsupported encoding (e.g. ISO-8859-1) should be rejected when feature is implemented.
- * Parser should not accept documents that declare a non-UTF-8 encoding.
+ * Unsupported encoding (e.g. ISO-8859-1) must be rejected.
+ * Parser does not accept documents that declare a non-UTF-8 encoding.
  */
 static void test_encoding_unsupported_rejected(void **state) {
 	(void)state;
 	SOURCE(source, "<?xml encoding=\"ISO-8859-1\"?><r/>");
 	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
-	/* When encoding declaration is honored: document should be NULL (rejected). */
 	if (document) {
 		xml_document_free(document, true);
-		/* Not yet implemented: we don't check encoding, so parse still succeeds. */
-	} else {
-		free(source);
-		/* Implemented: unsupported encoding rejected. */
+		fail_msg("%s", "Expected parse failure for unsupported encoding ISO-8859-1");
 	}
-	assert_true(true);
+	free(source);
+	assert_null(document);
 }
 
 
 /**
- * Another unsupported encoding (Windows-1252) should be rejected when implemented.
+ * Another unsupported encoding (Windows-1252) must be rejected.
  */
 static void test_encoding_unsupported_win1252_rejected(void **state) {
 	(void)state;
@@ -136,10 +133,10 @@ static void test_encoding_unsupported_win1252_rejected(void **state) {
 	struct xml_document* document = xml_parse_document(source, strlen((char const*)source));
 	if (document) {
 		xml_document_free(document, true);
-	} else {
-		free(source);
+		fail_msg("%s", "Expected parse failure for unsupported encoding Windows-1252");
 	}
-	assert_true(true);
+	free(source);
+	assert_null(document);
 }
 
 
