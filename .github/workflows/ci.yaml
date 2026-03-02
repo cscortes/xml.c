@@ -1,24 +1,33 @@
 name: CI
 
-# Controls when the action will run. Triggers the workflow on push or pull
-# request events but only for the main branch
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   schedule:
-    - cron:  '0 0 15 * *'
+    - cron: '0 0 15 * *'
 
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
 
 jobs:
-  ci:
-    runs-on: ubuntu-20.04
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Build and Test
-      run: npx --package mini-cross@0.15.2 mc --no-tty ubuntu-22.04 .mc/rebuild.sh
+      - name: Install Valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
 
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure

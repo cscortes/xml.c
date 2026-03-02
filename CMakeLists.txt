@@ -57,11 +57,9 @@ target_include_directories(
 )
 
 
-# Example program
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/example")
-
-# Build unit cases
+# Example program and unit tests (enable_testing before any add_test)
 enable_testing()
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/example")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
 
 
