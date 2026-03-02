@@ -68,13 +68,13 @@ int main(void) {
 	uint8_t* buffer = (uint8_t*)doc;   /* parser keeps reference; do not free until document freed */
 
 	struct xml_document* document = xml_parse_document(buffer, doc_len);
-	if (!document) {
+	if (document == NULL) {
 		printf("Error: Could not parse document.\n");
 		return EXIT_FAILURE;
 	}
 
 	struct xml_node* root = xml_document_root(document);
-	if (!root) {
+	if (root == NULL) {
 		xml_document_free(document, false);
 		return EXIT_FAILURE;
 	}

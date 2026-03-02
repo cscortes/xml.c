@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 	 * xml.c, then use a debug build (cmake -DCMAKE_BUILD_TYPE=Debug) which
 	 * will verbosely tell you about the parsing process
 	 */
-	if (!document) {
+	if (document == NULL) {
 		printf("Error: Could not parse document.\n");
 		exit(EXIT_FAILURE);
 	}

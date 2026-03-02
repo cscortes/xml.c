@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.14.2] — 2026-03-01
+
+### Changed
+
+- **Programming style: NULL and explicit pointer checks** — [docs/programming_style.md](docs/programming_style.md) now requires using `NULL` (not `0`) for pointer null and explicit comparisons (`ptr == NULL`, `ptr != NULL`) in conditionals. Applied across [src/xml.c](src/xml.c) and [example/example.c](example/example.c), [example/example2.c](example/example2.c): all pointer returns use `return NULL`, pointer checks use `== NULL` / `!= NULL`, and zero-terminated array loops use `while (*p != NULL)`.
+
+---
+
 ## [0.14.1] — 2026-03-01
 
 ### Added

@@ -189,12 +189,12 @@ static size_t get_zero_terminated_array_nodes(struct xml_node** nodes) {
  * [PRIVATE]
  */
 static uint8_t* xml_string_clone(struct xml_string* s) {
-	if (!s) {
+	if (s == NULL) {
 		return NULL;
 	}
 
 	uint8_t* clone = calloc(s->length + 1, sizeof(uint8_t));
-	if (!clone) {
+	if (clone == NULL) {
 		return NULL;
 	}
 
@@ -212,9 +212,9 @@ static uint8_t* xml_string_clone(struct xml_string* s) {
  * also frees the buffer (used for concatenated content e.g. CDATA).
  */
 static void xml_string_free(struct xml_string* string) {
-	if (!string)
+	if (string == NULL)
 		return;
-	if (string->buffer_owned && string->buffer)
+	if (string->buffer_owned && string->buffer != NULL)
 		free((void*)string->buffer);
 	free(string);
 }
@@ -226,10 +226,10 @@ static void xml_string_free(struct xml_string* string) {
  * Frees the resources allocated by the attribute
  */
 static void xml_attribute_free(struct xml_attribute* attribute) {
-	if(attribute->name) {
+	if (attribute->name != NULL) {
 		xml_string_free(attribute->name);
 	}
-	if(attribute->content) {
+	if (attribute->content != NULL) {
 		xml_string_free(attribute->content);
 	}
 	free(attribute);
@@ -244,19 +244,19 @@ static void xml_attribute_free(struct xml_attribute* attribute) {
 static void xml_node_free(struct xml_node* node) {
 	xml_string_free(node->name);
 
-	if (node->content) {
+	if (node->content != NULL) {
 		xml_string_free(node->content);
 	}
 
 	struct xml_attribute** at = node->attributes;
-	while(*at) {
+	while (*at != NULL) {
 		xml_attribute_free(*at);
 		++at;
 	}
 	free(node->attributes);
 
 	struct xml_node** it = node->children;
-	while (*it) {
+	while (*it != NULL) {
 		xml_node_free(*it);
 		++it;
 	}
@@ -644,7 +644,7 @@ static struct xml_string* xml_parse_cdata_section(struct xml_parser* parser) {
 			size_t content_len = parser->position - start;
 			parser->position += 3;
 			struct xml_string* s = malloc(sizeof(struct xml_string));
-			if (!s)
+			if (s == NULL)
 				return NULL;
 			s->buffer = &parser->buffer[start];
 			s->length = content_len;
@@ -696,7 +696,7 @@ static bool xml_name_is_char(uint8_t c) {
 }
 
 static bool xml_validate_tag_name(struct xml_parser* parser, struct xml_string* name, char const* context) {
-	if (!name || !name->buffer || name->length == 0) {
+	if (name == NULL || name->buffer == NULL || name->length == 0) {
 		xml_parser_error(parser, NO_CHARACTER, context);
 		return false;
 	}
@@ -818,12 +818,12 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 		start_content = &tag_open->buffer[offset_content];
 
 		new_attribute = malloc(sizeof(struct xml_attribute));
-		if (!new_attribute) {
+		if (new_attribute == NULL) {
 			goto cleanup_attributes;
 		}
 		new_attribute->name = malloc(sizeof(struct xml_string));
 		new_attribute->content = malloc(sizeof(struct xml_string));
-		if (!new_attribute->name || !new_attribute->content) {
+		if (new_attribute->name == NULL || new_attribute->content == NULL) {
 			if (new_attribute->name) free(new_attribute->name);
 			if (new_attribute->content) free(new_attribute->content);
 			free(new_attribute);
@@ -840,7 +840,7 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 		} else {
 			size_t expanded_len = 0;
 			uint8_t* expanded = expand_entity_refs((uint8_t const*)start_content, content_len, &expanded_len);
-			if (!expanded) {
+			if (expanded == NULL) {
 				xml_parser_error(parser, NO_CHARACTER, "xml_find_attributes::invalid entity in attribute value");
 				new_attribute->content->buffer = NULL;
 				new_attribute->content->buffer_owned = false;
@@ -867,7 +867,7 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 		new_elements = old_elements + 1;
 		{
 			struct xml_attribute** new_attributes = realloc(attributes, (new_elements + 1) * sizeof(struct xml_attribute*));
-			if (!new_attributes) {
+			if (new_attributes == NULL) {
 				xml_attribute_free(new_attribute);
 				goto cleanup_attributes;
 			}
@@ -929,7 +929,7 @@ static struct xml_string* xml_parse_tag_end(struct xml_parser* parser) {
 	 */
 	if (parser->position >= parser->length || '>' != parser->buffer[parser->position]) {
 		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_tag_end::expected tag end");
-		return 0;
+		return NULL;
 	}
 	xml_parser_consume(parser, 1);
 
@@ -964,7 +964,7 @@ static struct xml_string* xml_parse_open_tag_content(struct xml_parser* parser) 
 
 	if (parser->position >= parser->length || '>' != parser->buffer[parser->position]) {
 		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_open_tag_content::expected tag end");
-		return 0;
+		return NULL;
 	}
 	xml_parser_consume(parser, 1);
 
@@ -996,7 +996,7 @@ static struct xml_string* xml_parse_tag_open(struct xml_parser* parser) {
 	 */
 	if ('<' != xml_parser_peek(parser, CURRENT_CHARACTER)) {
 		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_tag_open::expected opening tag");
-		return 0;
+		return NULL;
 	}
 	xml_parser_consume(parser, 1);
 
@@ -1033,7 +1033,7 @@ static struct xml_string* xml_parse_tag_close(struct xml_parser* parser) {
 			xml_parser_error(parser, NEXT_CHARACTER, "xml_parse_tag_close::expected closing tag `/'");
 		}
 
-		return 0;
+		return NULL;
 	}
 	xml_parser_consume(parser, 2);
 
@@ -1156,7 +1156,10 @@ static uint8_t* expand_entity_refs(uint8_t const* in, size_t in_len, size_t* out
 	}
 
 	uint8_t* out = malloc(out_cap);
-	if (!out) return NULL;
+	if (out == NULL) 
+	{
+		return NULL;
+	}
 	*out_len = out_cap;
 
 	i = 0;
@@ -1234,7 +1237,7 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	 */
 	if ('<' != xml_parser_peek(parser, CURRENT_CHARACTER)) {
 		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_content::expected <");
-		return 0;
+		return NULL;
 	}
 
 	/* Ignore tailing whitespace
@@ -1246,7 +1249,7 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	/* Expand entity and character references (docs/issues.md). */
 	if (length == 0) {
 		struct xml_string* content = malloc(sizeof(struct xml_string));
-		if (!content) return 0;
+		if (content == NULL) return NULL;
 		content->buffer = &parser->buffer[start];
 		content->length = 0;
 		content->buffer_owned = false;
@@ -1254,14 +1257,14 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 	}
 	size_t expanded_len = 0;
 	uint8_t* expanded = expand_entity_refs(&parser->buffer[start], length, &expanded_len);
-	if (!expanded) {
+	if (expanded == NULL) {
 		xml_parser_error(parser, CURRENT_CHARACTER, "xml_parse_content::invalid entity or character reference");
-		return 0;
+		return NULL;
 	}
 	struct xml_string* content = malloc(sizeof(struct xml_string));
-	if (!content) {
+	if (content == NULL) {
 		free(expanded);
-		return 0;
+		return NULL;
 	}
 	content->buffer = expanded;
 	content->length = expanded_len;
@@ -1281,11 +1284,11 @@ static struct xml_string* xml_parse_content(struct xml_parser* parser) {
 static struct xml_string* content_append(struct xml_parser* parser,
 	struct xml_string* existing, uint8_t const* seg_buf, size_t seg_len) {
 	(void)parser;
-	if (!seg_buf && seg_len == 0)
+	if (seg_buf == NULL && seg_len == 0)
 		return existing;
-	if (!existing) {
+	if (existing == NULL) {
 		struct xml_string* s = malloc(sizeof(struct xml_string));
-		if (!s)
+		if (s == NULL)
 			return NULL;
 		s->buffer = seg_buf;
 		s->length = seg_len;
@@ -1295,13 +1298,13 @@ static struct xml_string* content_append(struct xml_parser* parser,
 	/* Concatenate: allocate new buffer, copy both, return new string (owned). */
 	size_t total = existing->length + seg_len;
 	uint8_t* copy = malloc(total);
-	if (!copy)
+	if (copy == NULL)
 		return existing;
 	memcpy(copy, existing->buffer, existing->length);
 	memcpy(copy + existing->length, seg_buf, seg_len);
 	xml_string_free(existing);
 	struct xml_string* s = malloc(sizeof(struct xml_string));
-	if (!s) {
+	if (s == NULL) {
 		free(copy);
 		return NULL;
 	}
@@ -1350,14 +1353,14 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	/* Parse open tag
 	 */
 	tag_open = xml_parse_tag_open(parser);
-	if (!tag_open) {
+	if (tag_open == NULL) {
 		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::tag_open");
 		goto exit_failure;
 	}
 
 	original_length = tag_open->length;
 	attributes = xml_find_attributes(parser, tag_open);
-	if (!attributes) {
+	if (attributes == NULL) {
 		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::attributes");
 		goto exit_failure;
 	}
@@ -1391,7 +1394,7 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 		if (parser->position + 9 <= parser->length
 		    && memcmp((char const*)&parser->buffer[parser->position], "<![CDATA[", 9) == 0) {
 			struct xml_string* cdata = xml_parse_cdata_section(parser);
-			if (!cdata) {
+			if (cdata == NULL) {
 				xml_parser_error(parser, 0, "xml_parse_node::cdata");
 				goto exit_failure;
 			}
@@ -1399,7 +1402,7 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 				size_t cdata_len = cdata->length;
 				content = content_append(parser, content, cdata->buffer, cdata_len);
 				xml_string_free(cdata);
-				if (!content && cdata_len > 0) {
+				if (content == NULL && cdata_len > 0) {
 					xml_parser_error(parser, 0, "xml_parse_node::content_append");
 					goto exit_failure;
 				}
@@ -1409,14 +1412,14 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 		/* Child element (starts with '<' and a name character) */
 		if (parser->buffer[parser->position] == '<') {
 			struct xml_node* child = xml_parse_node(parser);
-			if (!child) {
+			if (child == NULL) {
 				xml_parser_error(parser, NEXT_CHARACTER, "xml_parse_node::child");
 				goto exit_failure;
 			}
 			size_t old_elements = get_zero_terminated_array_nodes(children);
 			size_t new_elements = old_elements + 1;
 			struct xml_node** new_children = realloc(children, (new_elements + 1) * sizeof(struct xml_node*));
-			if (!new_children) {
+			if (new_children == NULL) {
 				xml_node_free(child);
 				xml_parser_error(parser, NEXT_CHARACTER, "xml_parse_node::children");
 				goto exit_failure;
@@ -1429,18 +1432,18 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 		/* Text content (does not start with '<') */
 		{
 			struct xml_string* text = xml_parse_content(parser);
-			if (!text) {
+			if (text == NULL) {
 				xml_parser_error(parser, 0, "xml_parse_node::content");
 				goto exit_failure;
 			}
-			if (!content) {
+			if (content == NULL) {
 				/* Single segment: use text directly so we keep ownership of its buffer. */
 				content = text;
 			} else {
 				size_t text_len = text->length;
 				content = content_append(parser, content, text->buffer, text_len);
 				xml_string_free(text);
-				if (!content && text_len > 0) {
+				if (content == NULL && text_len > 0) {
 					xml_parser_error(parser, 0, "xml_parse_node::content_append");
 					goto exit_failure;
 				}
@@ -1452,7 +1455,7 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	/* Parse close tag
 	 */
 	tag_close = xml_parse_tag_close(parser);
-	if (!tag_close) {
+	if (tag_close == NULL) {
 		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::tag_close");
 		goto exit_failure;
 	}
@@ -1486,18 +1489,18 @@ node_creation:;
 	/* A failure occurred, so free all allocated resources
 	 */
 exit_failure:
-	if (tag_open) {
+	if (tag_open != NULL) {
 		xml_string_free(tag_open);
 	}
-	if (tag_close) {
+	if (tag_close != NULL) {
 		xml_string_free(tag_close);
 	}
-	if (content) {
+	if (content != NULL) {
 		xml_string_free(content);
 	}
-	if (attributes) {
+	if (attributes != NULL) {
 		struct xml_attribute** at = attributes;
-		while (*at) {
+		while (*at != NULL) {
 			xml_attribute_free(*at);
 			++at;
 		}
@@ -1505,13 +1508,13 @@ exit_failure:
 	}
 
 	struct xml_node** it = children;
-	while (*it) {
+	while (*it != NULL) {
 		xml_node_free(*it);
 		++it;
 	}
 	free(children);
 
-	return 0;
+	return NULL;
 }
 
 
@@ -1530,17 +1533,17 @@ struct xml_document* xml_parse_document(uint8_t* buffer, size_t length) {
 
 	/* An empty buffer can never contain a valid document
 	 */
-	if (!length) {
+	if (length == 0) {
 		xml_parser_error(&parser, NO_CHARACTER, "xml_parse_document::length equals zero");
-		return 0;
+		return NULL;
 	}
 
 	/* Parse the root node
 	 */
 	struct xml_node* root = xml_parse_node(&parser);
-	if (!root) {
+	if (root == NULL) {
 		xml_parser_error(&parser, NO_CHARACTER, "xml_parse_document::parsing document failed");
-		return 0;
+		return NULL;
 	}
 
 	/* Return parsed document
@@ -1573,10 +1576,10 @@ struct xml_document* xml_open_document(FILE* source) {
 	for (;;) {
 		if (buffer_size - document_length < read_chunk) {
 			uint8_t* new_buffer = realloc(buffer, buffer_size + 2 * read_chunk);
-			if (!new_buffer) {
+			if (new_buffer == NULL) {
 				fclose(source);
 				free(buffer);
-				return 0;
+				return NULL;
 			}
 			buffer = new_buffer;
 			buffer_size += 2 * read_chunk;
@@ -1590,20 +1593,20 @@ struct xml_document* xml_open_document(FILE* source) {
 	if (ferror(source)) {
 		fclose(source);
 		free(buffer);
-		return 0;
+		return NULL;
 	}
 	if (fclose(source) != 0) {
 		free(buffer);
-		return 0;
+		return NULL;
 	}
 
 	/* Try to parse buffer
 	 */
 	struct xml_document* document = xml_parse_document(buffer, document_length);
 
-	if (!document) {
+	if (document == NULL) {
 		free(buffer);
-		return 0;
+		return NULL;
 	}
 	return document;
 }
@@ -1613,7 +1616,7 @@ struct xml_document* xml_open_document(FILE* source) {
  * [PUBLIC API]
  */
 void xml_document_free(struct xml_document* document, bool free_buffer) {
-	if (!document) {
+	if (document == NULL) {
 		return;
 	}
 	xml_node_free(document->root);
@@ -1629,8 +1632,8 @@ void xml_document_free(struct xml_document* document, bool free_buffer) {
  * [PUBLIC API]
  */
 struct xml_node* xml_document_root(struct xml_document* document) {
-	if (!document) {
-		return 0;
+	if (document == NULL) {
+		return NULL;
 	}
 	return document->root;
 }
@@ -1640,7 +1643,7 @@ struct xml_node* xml_document_root(struct xml_document* document) {
  * [PUBLIC API]
  */
 size_t xml_document_buffer_length(struct xml_document* document) {
-	if (!document) {
+	if (document == NULL) {
 		return 0;
 	}
 	return document->buffer.length;
@@ -1651,8 +1654,8 @@ size_t xml_document_buffer_length(struct xml_document* document) {
  * [PUBLIC API]
  */
 struct xml_string* xml_node_name(struct xml_node* node) {
-	if (!node) {
-		return 0;
+	if (node == NULL) {
+		return NULL;
 	}
 	return node->name;
 }
@@ -1662,8 +1665,8 @@ struct xml_string* xml_node_name(struct xml_node* node) {
  * [PUBLIC API]
  */
 struct xml_string* xml_node_content(struct xml_node* node) {
-	if (!node) {
-		return 0;
+	if (node == NULL) {
+		return NULL;
 	}
 	return node->content;
 }
@@ -1675,7 +1678,7 @@ struct xml_string* xml_node_content(struct xml_node* node) {
  * @warning O(n)
  */
 size_t xml_node_children(struct xml_node* node) {
-	if (!node || !node->children) {
+	if (node == NULL || node->children == NULL) {
 		return 0;
 	}
 	return get_zero_terminated_array_nodes(node->children);
@@ -1686,11 +1689,11 @@ size_t xml_node_children(struct xml_node* node) {
  * [PUBLIC API]
  */
 struct xml_node* xml_node_child(struct xml_node* node, size_t child) {
-	if (!node || !node->children) {
-		return 0;
+	if (node == NULL || node->children == NULL) {
+		return NULL;
 	}
 	if (child >= xml_node_children(node)) {
-		return 0;
+		return NULL;
 	}
 
 	return node->children[child];
@@ -1701,7 +1704,7 @@ struct xml_node* xml_node_child(struct xml_node* node, size_t child) {
  * [PUBLIC API]
  */
 size_t xml_node_attributes(struct xml_node* node) {
-	if (!node || !node->attributes) {
+	if (node == NULL || node->attributes == NULL) {
 		return 0;
 	}
 	return get_zero_terminated_array_attributes(node->attributes);
@@ -1712,11 +1715,11 @@ size_t xml_node_attributes(struct xml_node* node) {
  * [PUBLIC API]
  */
 struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribute) {
-	if (!node || !node->attributes) {
-		return 0;
+	if (node == NULL || node->attributes == NULL) {
+		return NULL;
 	}
-	if(attribute >= xml_node_attributes(node)) {
-		return 0;
+	if (attribute >= xml_node_attributes(node)) {
+		return NULL;
 	}
 
 	return node->attributes[attribute]->name;
@@ -1727,11 +1730,11 @@ struct xml_string* xml_node_attribute_name(struct xml_node* node, size_t attribu
  * [PUBLIC API]
  */
 struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attribute) {
-	if (!node || !node->attributes) {
-		return 0;
+	if (node == NULL || node->attributes == NULL) {
+		return NULL;
 	}
-	if(attribute >= xml_node_attributes(node)) {
-		return 0;
+	if (attribute >= xml_node_attributes(node)) {
+		return NULL;
 	}
 
 	return node->attributes[attribute]->content;
@@ -1743,8 +1746,8 @@ struct xml_string* xml_node_attribute_content(struct xml_node* node, size_t attr
  */
 struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name, ...) {
 
-	if (!node) {
-		return 0;
+	if (node == NULL) {
+		return NULL;
 	}
 
 	/* Find children, one by one
@@ -1768,29 +1771,29 @@ struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name
 
 		/* Interate through all children
 		 */
-		struct xml_node* next = 0;
+		struct xml_node* next = NULL;
 
 		size_t i = 0; for (; i < xml_node_children(current); ++i) {
 			struct xml_node* child = xml_node_child(current, i);
 
 			if (xml_string_equals(xml_node_name(child), &cn)) {
-				if (!next) {
+				if (next == NULL) {
 					next = child;
 
 				/* Two children with the same name
 				 */
 				} else {
 					va_end(arguments);
-					return 0;
+					return NULL;
 				}
 			}
 		}
 
 		/* No child with that name found
 		 */
-		if (!next) {
+		if (next == NULL) {
 			va_end(arguments);
-			return 0;
+			return NULL;
 		}
 		current = next;		
 		
@@ -1811,8 +1814,8 @@ struct xml_node* xml_easy_child(struct xml_node* node, uint8_t const* child_name
  * [PUBLIC API]
  */
 uint8_t* xml_node_name_c_string(struct xml_node* node) {
-	if (!node) {
-		return 0;
+	if (node == NULL) {
+		return NULL;
 	}
 
 	return xml_string_clone(xml_node_name(node));
@@ -1823,8 +1826,8 @@ uint8_t* xml_node_name_c_string(struct xml_node* node) {
  * [PUBLIC API]
  */
 uint8_t* xml_node_content_c_string(struct xml_node* node) {
-	if (!node) {
-		return 0;
+	if (node == NULL) {
+		return NULL;
 	}
 
 	return xml_string_clone(xml_node_content(node));
@@ -1836,7 +1839,7 @@ uint8_t* xml_node_content_c_string(struct xml_node* node) {
  */
 uint8_t* xml_node_attribute_name_c_string(struct xml_node* node, size_t attribute) {
 	struct xml_string* s = xml_node_attribute_name(node, attribute);
-	return s ? xml_string_clone(s) : 0;
+	return s != NULL ? xml_string_clone(s) : NULL;
 }
 
 
@@ -1845,7 +1848,7 @@ uint8_t* xml_node_attribute_name_c_string(struct xml_node* node, size_t attribut
  */
 uint8_t* xml_node_attribute_content_c_string(struct xml_node* node, size_t attribute) {
 	struct xml_string* s = xml_node_attribute_content(node, attribute);
-	return s ? xml_string_clone(s) : 0;
+	return s != NULL ? xml_string_clone(s) : NULL;
 }
 
 
@@ -1853,7 +1856,7 @@ uint8_t* xml_node_attribute_content_c_string(struct xml_node* node, size_t attri
  * [PUBLIC API]
  */
 size_t xml_string_length(struct xml_string* string) {
-	if (!string) {
+	if (string == NULL) {
 		return 0;
 	}
 	return string->length;
@@ -1864,7 +1867,7 @@ size_t xml_string_length(struct xml_string* string) {
  * [PUBLIC API]
  */
 void xml_string_copy(struct xml_string* string, uint8_t* buffer, size_t length) {
-	if (!string) {
+	if (string == NULL) {
 		return;
 	}
 
@@ -1878,7 +1881,7 @@ void xml_string_copy(struct xml_string* string, uint8_t* buffer, size_t length) 
  * [PUBLIC API]
  */
 bool xml_string_equals(struct xml_string* a, struct xml_string* b) {
-	if (!a || !b) {
+	if (a == NULL || b == NULL) {
 		return false;
 	}
 	if (a->length != b->length) {
@@ -1892,7 +1895,7 @@ bool xml_string_equals(struct xml_string* a, struct xml_string* b) {
  * [PUBLIC API]
  */
 bool xml_string_equals_cstr(struct xml_string* string, uint8_t const* cstr) {
-	if (!string) {
+	if (string == NULL) {
 		return false;
 	}
 	size_t cstr_len = (cstr == NULL) ? 0 : strlen((char const*)cstr);

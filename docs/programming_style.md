@@ -21,7 +21,7 @@ Guidelines for consistent, clear code in this project. The rules below are deriv
 ## C language usage
 
 - **C standard:** Code is built with **C11** (`-std=c11`). Use C11 features where they help; avoid unnecessary C99/C11-isms where C89 is enough.
-- **Null pointers:** Both **`0`** and **`NULL`** appear in the codebase for pointer null. Prefer **`0`** for pointer return values in the library for consistency with most of `xml.c`; use `NULL` where it improves clarity (e.g. in conditionals).
+- **Null pointers:** Do not use **`0`** when you mean a null pointer; use **`NULL`** for pointer null (return values, assignments, and conditionals). For null checks in conditionals, prefer explicit comparison (e.g. `ptr == NULL`, `ptr != NULL`) over `!ptr` or `ptr`.
 - **Boolean type:** Use **`_Bool`** in C (or `stdbool.h`’s `bool` where included); in C++ tests, use `bool`.
 - **Error/cleanup flow:** Use **`goto`** for centralized error handling and cleanup (e.g. `goto exit_failure`, `goto cleanup`, `goto node_creation`) instead of deep nesting or repeated cleanup code.
 - **Pointer style:** Pointers are written with the asterisk **attached to the type** in most of the codebase (e.g. `struct xml_node* node`, `uint8_t* buffer`). Local style sometimes uses `char *str`; either is acceptable if consistent in the same file.
