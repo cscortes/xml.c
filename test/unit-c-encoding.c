@@ -161,7 +161,7 @@ static void test_encoding_absent_default_utf8(void **state) {
 }
 
 
-	static const struct CMUnitTest tests[] = {
+static const struct CMUnitTest tests[] = {
 	cmocka_unit_test(test_encoding_utf8_accepted),
 	cmocka_unit_test(test_encoding_utf8_case_insensitive),
 	cmocka_unit_test(test_encoding_unsupported_rejected),
