@@ -87,6 +87,17 @@ If the executable was placed in a subdirectory (e.g. `build/example/`), run:
 
 You should see output like: `Hello World` and a line about `Root/This` children.
 
+### Run the second example (feature tour)
+
+A second program, **xml-example2**, parses one XML document that exercises most features in this fork (XML declaration, DOCTYPE skip, processing instructions, comments, CDATA, entity/character references, namespaces, unique attributes, tag Name production, and APIs such as `xml_easy_child`, `xml_document_buffer_length`, and the c_string helpers). Build and run it with:
+
+```bash
+cmake --build build --target xml-example2
+./build/example/xml-example2
+```
+
+Each section of the output points to the relevant XML and the feature demonstrated.
+
 **Input format:** The library assumes all input (in-memory buffers and files) is **UTF-8**. See [README](../README.md) for the XML compliance table and encoding note.
 
 ---

@@ -143,7 +143,11 @@ xml.c targets alignment with [XML 1.0](https://www.w3.org/TR/xml/) (well-formedn
 ## Usage
 
 This example is also included in the repository ([example/example.c](example/example.c))
-and will be built by default. The library header `<xml.h>` is self-contained (it
+and will be built by default. A second example ([example/example2.c](example/example2.c))
+parses one XML document that demonstrates most features added in this fork (encoding,
+DOCTYPE, PIs, comments, CDATA, entities, namespaces, unique attributes, Name production,
+c_string helpers, xml_easy_child, xml_document_buffer_length, xml_string_equals_cstr);
+run `xml-example2` after building. The library header `<xml.h>` is self-contained (it
 includes the standard headers it needs). The example below also uses `<stdio.h>`,
 `<stdlib.h>`, and `<string.h>`. Most of the code is C boilerplate; the important
 functions are `xml_parse_document`, `xml_document_root`, `xml_node_name`,

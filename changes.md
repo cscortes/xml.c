@@ -4,6 +4,14 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.14.0] — 2026-03-01
+
+### Added
+
+- **Second example (feature tour)** — [example/example2.c](example/example2.c) parses one XML document that demonstrates most features added in this fork: XML declaration (encoding UTF-8), DOCTYPE skip, processing instructions, comments, CDATA, entity/character references, namespaces, unique attributes, tag Name production, and APIs such as `xml_easy_child`, `xml_document_buffer_length`, and the c_string helpers. Each section of the output points to the relevant XML and the feature. Build target `xml-example2`; documented in README and [docs/quick_start.md](docs/quick_start.md).
+
+---
+
 ## [0.13.1] — 2026-03-01
 
 ### Added
