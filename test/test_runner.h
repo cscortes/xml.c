@@ -58,4 +58,13 @@ void get_unit_c_pi_tests(const struct CMUnitTest** out_tests, size_t* out_count)
  */
 void get_unit_c_cdata_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
+/**
+ * Get the XML compliance test array from unit-c-compliance.c
+ * (stricter tag names / Name production, unique attribute names per element).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_compliance_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
 #endif

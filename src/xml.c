@@ -508,6 +508,64 @@ static char* skip_delim(char* p, const char* delim) {
 
 /**
  * [PRIVATE]
+ * XML 1.0-ish Name validation (ASCII-only).
+ *
+ * This project does not currently implement full Unicode NameStartChar/NameChar
+ * tables. For well-formedness improvements (docs/issues.md), we enforce a
+ * pragmatic subset:
+ * - NameStartChar: [A-Za-z] '_' ':'
+ * - NameChar: NameStartChar | [0-9] | '-' | '.'
+ *
+ * Additionally, this parser historically includes a trailing '/' in the node
+ * name for self-closing tags like "<r/>" (name becomes "r/"). We allow a single
+ * trailing '/' for validation purposes.
+ */
+static bool xml_name_is_ascii_letter(uint8_t c) {
+	return (c >= (uint8_t)'A' && c <= (uint8_t)'Z') || (c >= (uint8_t)'a' && c <= (uint8_t)'z');
+}
+
+static bool xml_name_is_start_char(uint8_t c) {
+	return xml_name_is_ascii_letter(c) || c == (uint8_t)'_' || c == (uint8_t)':';
+}
+
+static bool xml_name_is_char(uint8_t c) {
+	return xml_name_is_start_char(c)
+		|| (c >= (uint8_t)'0' && c <= (uint8_t)'9')
+		|| c == (uint8_t)'-'
+		|| c == (uint8_t)'.';
+}
+
+static bool xml_validate_tag_name(struct xml_parser* parser, struct xml_string* name, char const* context) {
+	if (!name || !name->buffer || name->length == 0) {
+		xml_parser_error(parser, NO_CHARACTER, context);
+		return false;
+	}
+
+	size_t len = name->length;
+	/* Allow trailing '/' for self-closing tags stored as "tag/". */
+	if (len > 0 && name->buffer[len - 1] == (uint8_t)'/') {
+		len--;
+	}
+	if (len == 0) {
+		xml_parser_error(parser, NO_CHARACTER, context);
+		return false;
+	}
+
+	if (!xml_name_is_start_char(name->buffer[0])) {
+		xml_parser_error(parser, NO_CHARACTER, context);
+		return false;
+	}
+	for (size_t i = 1; i < len; ++i) {
+		if (!xml_name_is_char(name->buffer[i])) {
+			xml_parser_error(parser, NO_CHARACTER, context);
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * [PRIVATE]
  *
  * Finds and creates all attributes on the given node.
  * Uses quote-aware parsing so attribute values may contain spaces (XML-compliant; docs/issues.md #33).
@@ -516,7 +574,6 @@ static char* skip_delim(char* p, const char* delim) {
  * @see https://github.com/Molorius
  */
 static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, struct xml_string* tag_open) {
-	UNUSED(parser);
 	xml_parser_info(parser, "find_attributes");
 	char* tmp;
 	char* rest = NULL;
@@ -618,6 +675,17 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 		new_attribute->content->buffer_owned = false;
 
 		old_elements = get_zero_terminated_array_attributes(attributes);
+		/* Reject duplicate attribute names on the same element (XML well-formedness). */
+		for (size_t i = 0; i < old_elements; ++i) {
+			struct xml_string* existing = attributes[i]->name;
+			if (existing
+			    && existing->length == name_len
+			    && memcmp(existing->buffer, start_name, name_len) == 0) {
+				xml_parser_error(parser, NO_CHARACTER, "xml_find_attributes::duplicate attribute name");
+				xml_attribute_free(new_attribute);
+				goto cleanup_attributes;
+			}
+		}
 		new_elements = old_elements + 1;
 		{
 			struct xml_attribute** new_attributes = realloc(attributes, (new_elements + 1) * sizeof(struct xml_attribute*));
@@ -948,6 +1016,11 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 		goto exit_failure;
 	}
 
+	/* Enforce XML-ish Name production on tag names (docs/issues.md: stricter tag names). */
+	if (!xml_validate_tag_name(parser, tag_open, "xml_parse_node::invalid tag name")) {
+		goto exit_failure;
+	}
+
 	/* If tag ends with `/' it's self closing, skip content lookup */
 	if (tag_open->length > 0 && '/' == tag_open->buffer[original_length - 1]) {
 		/* Drop `/'
@@ -1032,6 +1105,10 @@ static struct xml_node* xml_parse_node(struct xml_parser* parser) {
 	tag_close = xml_parse_tag_close(parser);
 	if (!tag_close) {
 		xml_parser_error(parser, NO_CHARACTER, "xml_parse_node::tag_close");
+		goto exit_failure;
+	}
+
+	if (!xml_validate_tag_name(parser, tag_close, "xml_parse_node::invalid closing tag name")) {
 		goto exit_failure;
 	}
 

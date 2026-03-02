@@ -7,7 +7,7 @@
 
 **This repository is a modernization of the original xml.c.** For new features, fixes, tests, and documentation, use this repo. The original project is credited below.
 
-**Version:** 0.10.1 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
+**Version:** 0.11.0 (semantic versioning; based on [ooxi/xml.c](https://github.com/ooxi/xml.c) release 0.2.0). See [changes.md](changes.md) for the changelog.
 
 [![Build Status](https://github.com/ooxi/xml.c/actions/workflows/ci.yaml/badge.svg)](https://github.com/ooxi/xml.c/actions) *(upstream CI)*
 
@@ -117,12 +117,12 @@ xml.c parses an **XML-like subset** only. It is **not** a strict subset of [XML 
 | XML declaration `<?xml ...?>` | Optional | **Skipped** — treated as PI; not interpreted |
 | Single root element | Required | **Yes** — one root element only |
 | **Elements** | | |
-| Tag names (Name production) | Letter / `_` / `:` start; then Name chars | **No** — any chars until `>` or space (e.g. accepts `<2tag>`) |
+| Tag names (Name production) | Letter / `_` / `:` start; then Name chars | **Yes** — ASCII subset enforced (rejects e.g. `<2tag>`) |
 | Empty-element tags `<foo/>` | Allowed | **Yes** |
 | Proper nesting / matching tags | Required | **Yes** |
 | **Attributes** | | |
 | `name="value"` or `name='value'` | Required | **Yes** |
-| Unique attribute names per element | Required | **No** — duplicates accepted |
+| Unique attribute names per element | Required | **Yes** — duplicates rejected |
 | Entity/character refs in values | Allowed, must be expanded | **No** — not expanded |
 | **Content** | | |
 | Text content | Allowed | **Yes** |

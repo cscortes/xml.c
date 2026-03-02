@@ -4,6 +4,20 @@ This fork follows [semantic versioning](https://semver.org/). The version is bas
 
 ---
 
+## [0.11.0] — 2026-03-01
+
+### Added
+
+- **Stricter tag names (Name production)** — Parser rejects tag names that do not match an XML-like Name: must start with letter, `_`, or `:`; remaining characters may be letters, digits, `_`, `:`, `-`, `.`. Invalid names (e.g. `<2tag>`, `<.x>`) cause parse failure. Self-closing tags like `<r/>` are validated without the trailing `/`. See [docs/issues.md](docs/issues.md) (XML compliance candidates).
+- **Unique attribute names per element** — Parser rejects duplicate attribute names on the same element (XML well-formedness requirement). Documents with repeated attribute names (e.g. `<e a="1" a="2">`) now fail to parse.
+- **Compliance test module** — New [test/unit-c-compliance.c](test/unit-c-compliance.c) with tests for tag-name validation (reject digit-start, accept letter/underscore/colon/prefixed) and unique-attribute enforcement (reject duplicates, accept unique and single attributes). Wired into the C test runner and CMake.
+
+### Changed
+
+- **XML compliance table** — README "Current xml.c XML compliance" now reports **Yes** for "Tag names (Name production)" and "Unique attribute names per element".
+
+---
+
 ## [0.10.1] — 2026-03-01
 
 ### Changed

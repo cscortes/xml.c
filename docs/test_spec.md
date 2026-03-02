@@ -8,7 +8,7 @@ This document defines the test categories for the xml.c library, inventories the
 
 - **In scope:** Parsing well-formed XML (tags, nested elements, text content, attributes); public API behavior for valid inputs; behavior with NULL inputs and document lifecycle (free with/without buffer).
 - **Out of scope:** DTDs and encoding conversions are not supported. CDATA sections are supported (parsed and exposed as character data). Invalid-input tests only check that the parser returns NULL and does not crash (no guarantee on error messages).
-- **Conventions:** The C suite is one executable (runner [test/test_main.c](../test/test_main.c) plus modules [test/unit-c.c](../test/unit-c.c) and [test/unit-c-null.c](../test/unit-c-null.c)); it produces one comprehensive cmocka report. Tests run with working directory = build directory; fixture files are in [test/input/](../test/input/).
+- **Conventions:** The C suite is one executable (runner [test/test_main.c](../test/test_main.c) plus modules [test/unit-c.c](../test/unit-c.c), [test/unit-c-null.c](../test/unit-c-null.c), [test/unit-c-pi.c](../test/unit-c-pi.c), [test/unit-c-cdata.c](../test/unit-c-cdata.c), [test/unit-c-compliance.c](../test/unit-c-compliance.c)); it produces one comprehensive cmocka report. Tests run with working directory = build directory; fixture files are in [test/input/](../test/input/).
 
 ---
 
