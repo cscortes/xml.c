@@ -130,4 +130,14 @@ void get_unit_c_encoding_tests(const struct CMUnitTest** out_tests, size_t* out_
  */
 void get_unit_c_string_clone_tests(const struct CMUnitTest** out_tests, size_t* out_count);
 
+/**
+ * Get the xml_strtok_r test array from unit-c-strtok.c
+ * (branch coverage: token at end, token with delimiter, leading delimiters,
+ *  all-delimiter exhaustion; NULL-continuation branch is dead code).
+ *
+ * @param out_tests On success, set to pointer to the test array
+ * @param out_count On success, set to the number of tests
+ */
+void get_unit_c_strtok_tests(const struct CMUnitTest** out_tests, size_t* out_count);
+
 #endif

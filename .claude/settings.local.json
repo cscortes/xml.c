@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(valgrind --version)",
+      "Bash(ctest --test-dir /home/lcortes/Code/T1/xml.c/build --output-on-failure)",
+      "Bash(git -C /home/lcortes/Code/T1/xml.c diff docs/FeatureTestCases.md)",
+      "Bash(git -C /home/lcortes/Code/T1/xml.c diff CMakeLists.txt README.md docs/quick_start_tests.md)",
+      "Bash(git -C /home/lcortes/Code/T1/xml.c add CMakeLists.txt README.md docs/quick_start_tests.md)",
+      "Bash(git -C /home/lcortes/Code/T1/xml.c commit -m ' *)"
+    ]
+  }
+}

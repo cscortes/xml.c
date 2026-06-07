@@ -46,31 +46,26 @@ static inline const char* XML_ATTRIBUTE_TOKEN_DELIMITERS(void) {
 
 
 /*
- * public domain strtok_r() by Charlie Gordon
+ * Scans str for the first whitespace-delimited word.
  *
- *   from comp.lang.c  9/14/2007
+ * str must be a non-NULL, mutable, null-terminated string.
+ * Leading whitespace is skipped.  Returns NULL if str is all whitespace.
  *
- *      http://groups.google.com/group/comp.lang.c/msg/2ab1ecbb86646684
- *
- *     (Declaration that it's public domain):
- *      http://groups.google.com/group/comp.lang.c/msg/7c7b39328fefab9c
+ * The word is null-terminated in place and *nextp is set to the remainder
+ * (the character after the terminating whitespace, or the null terminator
+ * if the word reaches the end of str).  The caller must not pass a string
+ * literal.
  */
-static char* xml_strtok_r(char *str, const char *delim, char **nextp) {
-	char *ret;
-
-	if (str == NULL) {
-		str = *nextp;
-	}
-
-	str += strspn(str, delim);
+static char* xml_scan_word(char *str, char **nextp) {
+	while (isspace((unsigned char)*str)) str++;
 
 	if (*str == '\0') {
 		return NULL;
 	}
 
-	ret = str;
+	char *ret = str;
 
-	str += strcspn(str, delim);
+	while (*str && !isspace((unsigned char)*str)) str++;
 
 	if (*str) {
 		*str++ = '\0';
@@ -751,7 +746,7 @@ static struct xml_attribute** xml_find_attributes(struct xml_parser* parser, str
 	delim = XML_ATTRIBUTE_TOKEN_DELIMITERS();
 
 	/* First token is the tag name; remainder is attributes (docs/issues.md #38, #39). */
-	token = xml_strtok_r(tmp, delim, &rest);
+	token = xml_scan_word(tmp, &rest);
 	if (token == NULL) {
 		goto cleanup;
 	}
