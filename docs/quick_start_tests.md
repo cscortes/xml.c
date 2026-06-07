@@ -86,30 +86,44 @@ ctest --test-dir build -L "lowlevel|unit" --output-on-failure
 
 ---
 
-## Verbose output (see each test name)
+## Verbose output — see every test name
 
-Add `-V` to see every test name and result as cmocka prints them:
+### `check` target (recommended)
+
+The `check` build target runs all tests with full per-test output streamed live:
+
+```bash
+cmake --build build --target check
+```
+
+Each test function name appears as it runs:
+
+```
+5: [==========] all: Running 129 test(s).
+5: [ RUN      ] test_xml_parse_document_0
+5: [       OK ] test_xml_parse_document_0
+...
+6: [==========] feature-unit: Running 208 test(s).
+6: [ RUN      ] test_p01_minimal_self_closing
+6: [       OK ] test_p01_minimal_self_closing
+6: [ RUN      ] test_p02_minimal_open_close
+6: [       OK ] test_p02_minimal_open_close
+...
+6: [  PASSED  ] 208 test(s).
+```
+
+The prefix number (`5:`, `6:`) is the CTest test index. `check` is equivalent to `ctest -V --output-on-failure` but is available as a build-system target so no separate ctest invocation is needed.
+
+### `ctest -V` (manual)
+
+Add `-V` to any ctest invocation to get the same per-test output:
 
 ```bash
 ctest --test-dir build -V --output-on-failure
-```
 
-To scope verbose output to one suite:
-
-```bash
+# Scope to one suite
 ctest --test-dir build -L unit -V --output-on-failure
-```
-
-Example snippet:
-
-```
-[==========] feature-unit: Running 208 test(s).
-[ RUN      ] test_p01_minimal_self_closing
-[       OK ] test_p01_minimal_self_closing
-[ RUN      ] test_p02_minimal_open_close
-[       OK ] test_p02_minimal_open_close
-...
-[  PASSED  ] 208 test(s).
+ctest --test-dir build -L lowlevel -V --output-on-failure
 ```
 
 ---

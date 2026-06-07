@@ -97,8 +97,11 @@ The test suite is C-only ([cmocka](https://cmocka.org/)). Two test suites are re
 | `unit` | `xml-test-features` | 208 | Feature tests derived from `docs/FeatureTestCases.md` |
 
 ```bash
-# Run every test
+# Build then run all tests (summary output)
 cmake --build build && ctest --test-dir build --output-on-failure
+
+# Run with full per-test names streamed live ([ RUN ] / [ OK ] for every test)
+cmake --build build --target check
 
 # Run only the lowlevel suite
 ctest --test-dir build -L lowlevel --output-on-failure

@@ -62,6 +62,15 @@ enable_testing()
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/example")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
 
+# 'check' target: run all tests with full per-test output streamed live.
+# Usage: cmake --build build --target check
+add_custom_target(check
+	COMMAND ${CMAKE_CTEST_COMMAND} -V --output-on-failure
+	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+	COMMENT "Running tests (verbose)"
+	USES_TERMINAL
+)
+
 
 # API documentation (Doxygen); optional if Doxygen is not installed
 find_package(Doxygen QUIET)
