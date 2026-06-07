@@ -89,11 +89,25 @@ For a debug build: `cmake -DCMAKE_BUILD_TYPE=Debug ..` then rebuild.
 
 ## Testing
 
-The test suite is C-only (see [cmocka](https://cmocka.org/)). From the build directory:
+The test suite is C-only ([cmocka](https://cmocka.org/)). Two test suites are registered with CTest, each tagged with a label:
 
-    $ ctest --output-on-failure
+| Label | Executable | Count | What it covers |
+|-------|-----------|------:|----------------|
+| `lowlevel` | `xml-test-c` | 128 | Low-level API and parser edge-case tests |
+| `unit` | `xml-test-features` | 208 | Feature tests derived from `docs/FeatureTestCases.md` |
 
-If [Valgrind](https://valgrind.org/) is installed, CMake adds an extra test **xml-test-c-valgrind** that runs the C tests under Valgrind (memcheck, leak check). Valgrind is optional—if it's not installed, that test is simply not added. For full instructions and how to install Valgrind, see [docs/quick_start_tests.md](docs/quick_start_tests.md).
+```bash
+# Run every test
+cmake --build build && ctest --test-dir build --output-on-failure
+
+# Run only the lowlevel suite
+ctest --test-dir build -L lowlevel --output-on-failure
+
+# Run only the feature/unit suite
+ctest --test-dir build -L unit --output-on-failure
+```
+
+If [Valgrind](https://valgrind.org/) is installed, CMake automatically adds **xml-test-c-valgrind** (memcheck + full leak check). For first-time setup, label usage, verbose output, and Valgrind installation, see [docs/quick_start_tests.md](docs/quick_start_tests.md).
 
 
 ## Development (this fork)
