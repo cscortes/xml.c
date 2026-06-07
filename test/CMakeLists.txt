@@ -72,6 +72,59 @@ add_test(
 	COMMAND "${PROJECT_NAME}-test-c"
 	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
+set_tests_properties("${PROJECT_NAME}-test-c" PROPERTIES LABELS "lowlevel")
+
+# Feature unit tests (spec-driven; from docs/FeatureTestCases.md)
+add_executable(
+	"${PROJECT_NAME}-test-features"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_main.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_parse_document.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_open_document.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_document_root.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_node_content.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_node_attributes.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_easy_child.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_c_string_api.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_string_api.c"
+	"${CMAKE_CURRENT_LIST_DIR}/ut_integration.c"
+	"${CMAKE_CURRENT_LIST_DIR}/wrap_realloc.c"
+)
+
+target_include_directories(
+	"${PROJECT_NAME}-test-features"
+	PRIVATE
+		"${CMAKE_CURRENT_LIST_DIR}"
+)
+
+target_compile_options(
+	"${PROJECT_NAME}-test-features"
+	PRIVATE
+		-std=c11
+		-Wall
+		-Wextra
+		-Wpedantic
+)
+
+target_link_libraries(
+	"${PROJECT_NAME}-test-features"
+	PRIVATE
+		xml
+		cmocka
+)
+
+target_link_options(
+	"${PROJECT_NAME}-test-features"
+	PRIVATE
+		"LINKER:--wrap=realloc"
+)
+
+add_test(
+	NAME "${PROJECT_NAME}-test-features"
+	COMMAND "${PROJECT_NAME}-test-features"
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+)
+set_tests_properties("${PROJECT_NAME}-test-features" PROPERTIES LABELS "unit")
+
 
 # Valgrind memory-check test (optional; added only if valgrind is installed)
 find_program(VALGRIND_EXECUTABLE NAMES valgrind)
